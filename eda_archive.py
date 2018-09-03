@@ -1,18 +1,11 @@
 import pandas as pd
 import numpy as np
 
-''' All sheets from CP:
- ['Menu', 'Notifications', 'users', 'Hospitals', 'Reports',
-'Bundle_Reports', 'chains', 'facilities', 'Statuses', 'BGs', 'Sheet30', 'EKGs',
- 'patients', 'patient_enrollment_records', 'patient labs', 'patient weights',
- 'patient BNP', 'patient BP', 'Cardiac_Meds', 'notes']
+import seaborn as sns
 
-Some notes on them:
-Sheet30 - Just building the visual for how many days they've been in hospital
+from Clean_Fun import *
 
-To do:
-Notes sheet - determine patient_link
-
+'''
 All sheets from CPA:
 ['patient_enrollment_records', 'Settings', 'patient weights', 'patient BNP',
 'Cardiac_Meds', 'patient labs', 'patient BP', 'notes',
@@ -22,17 +15,6 @@ To do:
 If we have time, clean up Notes and Old Notes
 
  '''
-sheets_to_load=['Hospitals', 'chains', 'facilities', 'Statuses', 'Sheet30', 'EKGs',
- 'patients', 'patient_enrollment_records', 'patient labs', 'patient weights',
- 'patient BNP', 'patient BP', 'Cardiac_Meds', 'notes']
-
-# Creates a dictionary with each sheet from the Excel, sheet_name=None means load all sheets
-cp=pd.read_excel('Data/Cardiac Program_M.xlsx',sheet_name=sheets_to_load)
-cp['patient_enrollment_records'].columns
-
-# this helped me realize that records from the archive, have their Enrollment Records in the not-Archive. So merging is a necessity
-cp['patients'].loc[cp['patients']['patient_id']=='W6X7LdR5']['Patient_Name','','Admin Notes']
-cp['patient_enrollment_records'].loc[cp['patient_enrollment_records']['patient_link']=='W6X7LdR5']
 
 cpa_sheets_load=['patient_enrollment_records', 'patient weights', 'patient BNP',
 'Cardiac_Meds','patient labs', 'patient BP', 'notes',"Old notes (Don't fit structure)"]
@@ -60,6 +42,9 @@ keep_columns=['patient_link', 'Enrollment_Date',
        'cardiac_related', 'Chain_link']
 df_train.loc[df_train['patient_link']=='W6X7LdR5']
 df_train=df_train[keep_columns]
+df_train.patient_link.unique().shape
+
+enroll_date=choose_most_recent(df_train,'Enrollment_Date')
 
 # %% Weight Archive
 # we could use df_train patient links to always separate the dataset
@@ -102,9 +87,10 @@ def handle_date_typos(x):
         weight.loc[weight.patient_weight_date==x].index)
 # %%
 
-df=weight
-
 def choose_most_recent(df,date_col):
+    ''' Choose the most recent lab/test result from list of results
+    To Do: make the drop duplicates more robust since misses some patients
+    '''
     new_df=pd.DataFrame(columns=df.columns)
     for pat in df.patient_link.unique():
         pat_df=df.loc[df.patient_link==pat]
@@ -118,7 +104,8 @@ def choose_most_recent(df,date_col):
                 continue
         new_df=pd.concat([new_df, tmp_df], axis=0)
     return new_df.drop_duplicates()
-weight_nodupes =choose_most_recent(df,'patient_weight_date')
+
+weight_nodupes =choose_most_recent(weight,'patient_weight_date')
 
 # %%
 
@@ -137,4 +124,22 @@ plab=cpa['patient labs']
 plab.columns
 plab=plab[['labs_date', 'BUN', 'cr', 'Sodium', 'Potasium', 'Mg',
        'patient_link','facility_Link', 'Chain_link', 'Hospitals', 'This_CR_Change']]
-choose_most_recent(plab,'labs_date')
+labs_nodupes=choose_most_recent(plab,'labs_date')
+
+all_nodupes=pd.merge(enroll_date,weight_nodupes,on='patient_link',how='outer')
+all_nodupes=pd.merge(all_nodupes,bnp_nodupes,on='patient_link',how='outer')
+all_nodupes.shape
+all_nodupes=pd.merge(all_nodupes,labs_nodupes,on='patient_link',how='outer')
+all_nodupes.shape
+
+# test=all_nodupes.columns
+# heat=sns.heatmap(all_nodupes[test].isnull(), cbar=False)
+# %%
+
+plt.subplots(figsize=(20,15))
+heat=sns.heatmap(all_nodupes.isnull(), cbar=False)
+# plt.xticks(rotation=75)
+fig=heat.get_figure()
+fig.savefig('archive_missingness.png',transparent=True, dpi=400,bbox_inches='tight' ,format='png')
+
+# %%
