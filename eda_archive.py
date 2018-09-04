@@ -17,10 +17,11 @@ If we have time, clean up Notes and Old Notes
  '''
 
 cpa_sheets_load=['patient_enrollment_records', 'patient weights', 'patient BNP',
-'Cardiac_Meds','patient labs', 'patient BP', 'notes',"Old notes (Don't fit structure)"]
+    'Cardiac_Meds','patient labs', 'patient BP', 'notes',"Old notes (Don't fit structure)"]
 cpa=pd.read_excel('Data/Cardiac Program_Archive.xlsx',sheet_name=cpa_sheets_load)
 cpa.keys()
 
+# %% Enrollment records
 # Attempt to simply separate Patients that have been discharged or not:
 df=cpa['patient_enrollment_records']
 
@@ -84,7 +85,7 @@ def handle_date_typos(x):
     try:
         return pd.to_datetime(x)
     except:
-        weight.loc[weight.patient_weight_date==x].index)
+        weight.loc[weight.patient_weight_date==x].index
 # %%
 
 def choose_most_recent(df,date_col):
@@ -116,6 +117,8 @@ bnp.columns
 bnp=bnp[['Patient_link','BNP_date', 'BNP','This_BNP_Change', 'Archive']]
 bnp.columns=['patient_link','BNP_date', 'BNP','This_BNP_Change', 'Archive']
 bnp.BNP_date=bnp.BNP_date.apply(lambda x:pd.to_datetime(x,errors='coerce'))
+bnp=bnp.loc[bnp['patient_link'].apply(lambda x: True if (x in train_patients.values) else False)]
+
 # bnp.patient_link.value_counts().plot.hist(grid=True, bins=20, rwidth=0.9,color='#607c8e')
 bnp_nodupes=choose_most_recent(bnp,'BNP_date')
 
@@ -124,6 +127,8 @@ plab=cpa['patient labs']
 plab.columns
 plab=plab[['labs_date', 'BUN', 'cr', 'Sodium', 'Potasium', 'Mg',
        'patient_link','facility_Link', 'Chain_link', 'Hospitals', 'This_CR_Change']]
+plab=plab.loc[plab['patient_link'].apply(lambda x: True if (x in train_patients.values) else False)]
+
 labs_nodupes=choose_most_recent(plab,'labs_date')
 
 all_nodupes=pd.merge(enroll_date,weight_nodupes,on='patient_link',how='outer')
@@ -131,7 +136,7 @@ all_nodupes=pd.merge(all_nodupes,bnp_nodupes,on='patient_link',how='outer')
 all_nodupes.shape
 all_nodupes=pd.merge(all_nodupes,labs_nodupes,on='patient_link',how='outer')
 all_nodupes.shape
-
+all_nodupes.to_csv('ArchiveClean.csv')
 # test=all_nodupes.columns
 # heat=sns.heatmap(all_nodupes[test].isnull(), cbar=False)
 # %%
