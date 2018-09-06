@@ -5,6 +5,9 @@
 *.xlsx
 
 
+*.band
+*.mp3
+
 NDA_Paperwork/
 Data/
 
