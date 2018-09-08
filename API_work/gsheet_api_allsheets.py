@@ -36,6 +36,22 @@ def gsheet2pandas(gsheet):
     print('Google Sheet of size '+str(df.shape)+' successfully loaded')
     return df
 
-df=gsheet2pandas(st)
+def gExcel2pdDict(gexcel,sheet_names):
+    """
+    from Gspread Google Sheet Object, load all the specified tabs as
+    a Python dictionary, similar to Pandas from_excel
+    Uses gsheet2pandas function
+    """
+    all_dict={}
+    for st in sheet_names:
+        tmp_st=gexcel.worksheet(st)
+        tmp_df=gsheet2pandas(tmp_st)
+        all_dict[st]=tmp_df
+        print('Loaded '+str(st)+' successfully')
+    return all_dict
+test_st_names=['patients','patient_enrollment_records']
+cp=gExcel2pdDict(gs,test_st_names)
 
-df.head()
+cp['patients'].head(10)
+df=cp['patients']
+# %%
