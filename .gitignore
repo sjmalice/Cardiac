@@ -3,7 +3,7 @@
 *.pdf
 *.png
 *.xlsx
-
+*.pptx
 *.json
 API_work/gspread
 API_work/testing
