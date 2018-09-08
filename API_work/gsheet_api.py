@@ -11,7 +11,13 @@ creds = store.get()
 gc = gspread.authorize(creds)
 
 gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
-st=gs.get_worksheet(12)
+
+gs.worksheets()
+
+st=gs.worksheet('patients')
+
+# st=gs.get_worksheet(12)
+
 # %%
 
 def gsheet2pandas(gsheet):
@@ -19,9 +25,10 @@ def gsheet2pandas(gsheet):
     dataframe """
     header=gsheet.row_values(1) # for some reason this package indexes at 1
     df = pd.DataFrame(columns=header)
-    for row in np.arange(len(gsheet.get_all_values())):
+    all_records=gsheet.get_all_records()
+    for row in np.arange(len(gsheet.get_all_values())-1):
         print(row)
-        tmp_dict=gsheet.get_all_records()[row]
+        tmp_dict=all_records[row]
         # tmp_row = np.array(gsheet.row_values(row)).reshape(1,len(header))
         tmp_df = pd.DataFrame(tmp_dict, index=[row])
         df = pd.concat([df,tmp_df], axis=0)
@@ -29,4 +36,4 @@ def gsheet2pandas(gsheet):
 
 df=gsheet2pandas(st)
 
-df
+df.head()
