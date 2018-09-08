@@ -3,21 +3,16 @@ import pandas as pd
 from oauth2client import file, client, tools
 import numpy as np
 
+# Get credentials
 credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/client_secret.json'
 
 store = file.Storage(credentials)
 creds = store.get()
-
 gc = gspread.authorize(creds)
-
+# %% load Google Sheet by Key Name
 # opens the Cardiac_M sheet from our google drive:
 gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
-
 gs.worksheets()
-
-st=gs.worksheet('patients')
-
-# st=gs.get_worksheet(12)
 
 # %%
 
@@ -54,4 +49,5 @@ cp=gExcel2pdDict(gs,test_st_names)
 
 cp['patients'].head(10)
 df=cp['patients']
-# %%
+
+# %% Adding column of our predictions to the Google sheet
