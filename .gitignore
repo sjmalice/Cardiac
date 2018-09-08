@@ -4,7 +4,9 @@
 *.png
 *.xlsx
 
-
+*.json
+API_work/gspread
+API_work/testing
 *.band
 *.mp3
 
