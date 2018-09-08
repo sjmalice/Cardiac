@@ -10,6 +10,7 @@ creds = store.get()
 
 gc = gspread.authorize(creds)
 
+<<<<<<< HEAD
 # opens the Cardiac_M sheet from our google drive:
 gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
 
@@ -19,6 +20,10 @@ st=gs.worksheet('patients')
 
 # st=gs.get_worksheet(12)
 
+=======
+gs = gc.open_by_key(KEYHERE)
+st=gs.get_worksheet(12)
+>>>>>>> 8cabe28efb9f58a6038a17f21145d19ebde0d874
 # %%
 
 def gsheet2pandas(gsheet):
