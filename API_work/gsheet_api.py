@@ -10,7 +10,7 @@ creds = store.get()
 
 gc = gspread.authorize(creds)
 
-gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
+gs = gc.open_by_key(KEYHERE)
 st=gs.get_worksheet(12)
 # %%
 
