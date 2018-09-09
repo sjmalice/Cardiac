@@ -45,10 +45,9 @@ def choose_most_recent(df,date_col):
         else:
             try:
                 tmp_df=pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
-                tmp_df.reset_index(inplace=True)
             except:
                 continue
-        new_df=pd.concat([new_df, tmp_df.iloc[[0]]], axis=0)
+        new_df=pd.concat([new_df, tmp_df], axis=0)
     return new_df.drop_duplicates()
 
 def lower_errors(x):
