@@ -12,6 +12,7 @@ def outcome_split(df,outcome_dict={
     'Not approriate for program, removed']}):
     """ Input dataframe and Outcome dictionary
     Adds Train and Outcome columns to dataframe
+    TO DO: Drop patient altogether if cardiac_related
     """
     outcome={}
     train={}
