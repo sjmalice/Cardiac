@@ -3,14 +3,14 @@ import pandas as pd
 from oauth2client import file, client, tools
 import numpy as np
 
-credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/client_secret.json'
+credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/credentials_writer.json'
+# credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/client_secret_403702388444-95dg5d6gfpcj25bq3amq1bfuge2rh6pi.apps.googleusercontent.com.json'
 
 store = file.Storage(credentials)
 creds = store.get()
 
 gc = gspread.authorize(creds)
 
-<<<<<<< HEAD
 # opens the Cardiac_M sheet from our google drive:
 gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
 
@@ -19,11 +19,9 @@ gs.worksheets()
 st=gs.worksheet('patients')
 
 # st=gs.get_worksheet(12)
-
-=======
 gs = gc.open_by_key(KEYHERE)
 st=gs.get_worksheet(12)
->>>>>>> 8cabe28efb9f58a6038a17f21145d19ebde0d874
+
 # %%
 
 def gsheet2pandas(gsheet):

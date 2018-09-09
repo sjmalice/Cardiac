@@ -19,6 +19,10 @@ def lower_errors(x):
         return ""
 
 def find_unique_diag(df_diag_column):
+    """
+    Within text Diagnosis Columns, returns a list of the Unique Diagnoses,
+    removing the combinations of diagnoses
+    """
     all_diag=df_diag_column.apply(lambda x: lower_errors(x)).unique()
     all_diag[7].split(' , ')
     unique_diag=[]
@@ -35,6 +39,11 @@ test=find_unique_diag(archive.Diagnosis_1)
 df=archive[['patient_link','Diagnosis_1']].sample(10)
 
 def dummify_diagnoses(df,unique_diag,diagnosis_col='Diagnosis_1'):
+    """
+    Takes Diagnoses and dummifies them for patients. If a patient has multiple
+    diagnoses, will put a 1 in all relevant Diagnoses.
+    The kth column is NA, no diagnosis. Maybe we will impute with the mode?
+    """
     header=unique_diag.tolist().append('patient_link')
     dummy_diag=pd.DataFrame(columns=header)
 

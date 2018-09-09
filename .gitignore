@@ -7,6 +7,7 @@
 *.json
 API_work/gspread
 API_work/testing
+API_work/gspread-dataframe
 *.band
 *.mp3
 

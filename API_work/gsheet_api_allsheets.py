@@ -4,7 +4,8 @@ from oauth2client import file, client, tools
 import numpy as np
 
 # Get credentials
-credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/client_secret.json'
+# credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/MtSinai-3008a21e1f27.json'
+credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/credentials_writer.json'
 
 store = file.Storage(credentials)
 creds = store.get()
