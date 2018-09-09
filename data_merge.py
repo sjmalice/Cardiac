@@ -1,24 +1,32 @@
 # Data merging functions
-
 import pandas as pd
 import numpy as np
+import pickle
 import re
 from functools import reduce
 from Clean_Fun import *
 
-def sheet_merge(file_path, sheet_dict, date_col_list):
+def archive_sheet_merge(file_path, sheet_pkl, datecol_pkl):
     """
-    With a path to an Excel doc as input, joins (on patient_link) only
-    those sheets and columns specified in a dictionary and
-    returns a combined pandas DataFrame.
+    With a path to archive Excel doc as input, joins (on patient_link) only
+    those sheets and columns specified in a pickle dictionary and returns a combined pandas DataFrame.
 
     Keyword Arguments
     -----------------
     file_path -- File path for the Excel spreadsheet
-    sheet_dict -- Dictionary with sheet names (case sensitive) as keys and a list of column names
-    as values for each sheet (i.e. {sheet1_name: [col1, col2,...coln], sheet2_name: [col1,...]})
-    date_col_list -- A list of date column names on which to filter by most recent measurement date
+    sheet_pkl -- Path to pickle containing dictionary with sheet names (keys, case sensitive) and a list of column names (values)
+    for each sheet (i.e. {sheet1_name: [col1, col2,...coln], sheet2_name: [col1,...]})
+    datecol_pkl -- Path to pickle containing dictionary of sheet names (keys, case sensitive) and date column names (values) on which to
+    filter by most recent measurement date. Only one column name per sheet (i.e. {sheet1_name: date_col_name1, ...})
     """
+    # Load sheet dictionary from pickle
+    with open(sheet_pkl, 'rb') as f:
+        sheet_dict = pickle.load(f)
+
+    # Load date_col dictionary from pickle
+    with open(datecol_pkl, 'rb') as f:
+        date_col_dict = pickle.load(f)
+
     # Load the specified sheets into a dictionary of sheets as keys and dataframes as values
     sheets = list(sheet_dict.keys())
     df_dict = pd.read_excel(file_path, sheet_name=sheets)
@@ -32,46 +40,63 @@ def sheet_merge(file_path, sheet_dict, date_col_list):
         print('Retained columns: {}\n'.format(sheet_dict[sheet_name]))
 
     # Filter rows with most recent measurement date to remove duplicate patients
-    for sheet_name, col in zip(sheets, list(map(str.lower, date_col_list))):
-        init_len = len(df_dict[sheet_name])
-        df_dict[sheet_name] = choose_most_recent(df_dict[sheet_name], col)
-        print('Sheet \"{}\" reduced from {} rows to {} rows'.format(sheet_name, init_len, len(df_dict[sheet_name])))
+    # If date column not given for particular sheet name, skip that sheet
+    for sheet_name in list(date_col_dict.keys()):
+        if sheet_name in list(df_dict.keys()):
+            init_len = len(df_dict[sheet_name])
+            df_dict[sheet_name] = choose_most_recent(df_dict[sheet_name], date_col_dict[sheet_name].lower())
+            print('Sheet \"{}\" reduced from {} rows to {} rows'.format(sheet_name, init_len, len(df_dict[sheet_name])))
+        else:
+            print('Sheet \"{}\" did not have a date column to filter by'.format(sheet_name))
+            continue
 
-    # full_df = reduce(lambda x, y: pd.merge(x, y, on = 'patient_link'), list(df_dict.values()))
+    return reduce(lambda x, y: pd.merge(x, y, on='patient_link', how='outer'), list(df_dict.values()))
 
+def live_sheet_merge(file_path, sheet_pkl, datecol_pkl):
+    """
+    With a path to live Excel doc as input, joins (on patient_link) only
+    those sheets and columns specified in a pickle dictionary and returns a combined pandas DataFrame.
 
-########################
-####### Testing ########
-########################
+    Keyword Arguments
+    -----------------
+    file_path -- File path for the Excel spreadsheet
+    sheet_pkl -- Path to pickle containing dictionary with sheet names (keys, case sensitive) and a list of column names (values)
+    for each sheet (i.e. {sheet1_name: [col1, col2,...coln], sheet2_name: [col1,...]})
+    datecol_pkl -- Path to pickle containing dictionary of sheet names (keys, case sensitive) and date column names (values) on which to
+    filter by most recent measurement date. Only one column name per sheet (i.e. {sheet1_name: date_col_name1, ...})
+    """
+    # Load sheet dictionary from pickle
+    with open(sheet_pkl, 'rb') as f:
+        sheet_dict = pickle.load(f)
 
-sheet_dict = {'patient_enrollment_records': ['patient_link', 'facilities_link', 'Enrollment_Date', 'admit_weight'],\
-             'patient weights': ['patient_link', 'patient_weight_date', 'weight', 'weight_change_since_admit'],\
-             'patient BNP': ['patient_link', 'bnp_date', 'bnp', 'this_bnp_change'],\
-             'Cardiac_Meds': ['patient_link', 'Cardiac_Meds_Date', 'ACE', 'BB', 'Diuretics', 'Anticoagulant', 'Ionotropes', 'Other cardiac meds'],\
-             'patient labs': ['patient_link', 'labs_date', 'BUN', 'cr', 'Sodium', 'Potasium', 'Mg'],\
-             'patient BP': ['patient_link', 'bp_date', 'resting_hr', 'systolic', 'diastolic', 'resting_bp', 'mets_base_line', 'mets']}
+    # Load date_col dictionary from pickle
+    with open(datecol_pkl, 'rb') as f:
+        date_col_dict = pickle.load(f)
 
-sheets = list(sheet_dict.keys())
-df_dict = pd.read_excel('Data/Cardiac Program_Archive.xlsx', sheet_name=sheets)
+    # Load the specified sheets into a dictionary of sheets as keys and dataframes as values
+    sheets = list(sheet_dict.keys())
+    df_dict = pd.read_excel(file_path, sheet_name=sheets)
 
-for sheet_name in sheets:
-    df_dict[sheet_name].columns = [x.lower() for x in df_dict[sheet_name].columns]
-    df_dict[sheet_name] = df_dict[sheet_name][list(map(str.lower, sheet_dict[sheet_name]))]
-    print('Sheet name: \"{}\"'.format(sheet_name))
-    print('Retained columns: {}\n'.format(list(df_dict[sheet_name].columns)))
+    df_dict['patients'].rename(columns={'patient_id': 'patient_link'}, inplace=True)
+    sheet_dict['patients'][0] = 'patient_link'
 
-date_col_list = ['enrollment_date', 'patient_weight_date', 'bnp_date', 'cardiac_meds_date', 'labs_date', 'bp_date']
+    # Convert all column names to lowercase for consistancy
+    # For each sheet dataframe, keep only the specified columns
+    for sheet_name in sheets:
+        df_dict[sheet_name].columns = [x.lower() for x in df_dict[sheet_name].columns]
+        df_dict[sheet_name] = df_dict[sheet_name][list(map(str.lower, sheet_dict[sheet_name]))]
+        print('Sheet name: \"{}\"'.format(sheet_name))
+        print('Retained columns: {}\n'.format(sheet_dict[sheet_name]))
 
-for sheet_name, col in zip(sheets, list(map(str.lower, date_col_list))):
-    init_len = len(df_dict[sheet_name])
-    df_dict[sheet_name] = choose_most_recent(df_dict[sheet_name], col)
-    print('Sheet \"{}\" reduced from {} rows to {} rows'.format(sheet_name, init_len, len(df_dict[sheet_name])))
+    # Filter rows with most recent measurement date to remove duplicate patients
+    # If date column not given for particular sheet name, skip that sheet
+    for sheet_name in list(date_col_dict.keys()):
+        if sheet_name in list(df_dict.keys()):
+            init_len = len(df_dict[sheet_name])
+            df_dict[sheet_name] = choose_most_recent(df_dict[sheet_name], date_col_dict[sheet_name].lower())
+            print('Sheet \"{}\" reduced from {} rows to {} rows'.format(sheet_name, init_len, len(df_dict[sheet_name])))
+        else:
+            print('Sheet \"{}\" did not have a date column to filter by'.format(sheet_name))
+            continue
 
-for sheet_name in sheets:
-    print(len(df_dict[sheet_name]))
-for sheet_name in sheets:
-    print(df_dict[sheet_name]['patient_link'].dtype)
-reduce(lambda x, y: pd.merge(x, y, on='patient_link'), list(df_dict.values()))
-
-temp_df = df_dict['patient_enrollment_records']
-sheets_no_first = ['patient weights', 'patient BNP', 'Cardiac_Meds', 'patient labs', 'patient BP']
+    return reduce(lambda x, y: pd.merge(x, y, on='patient_link', how='outer'), list(df_dict.values()))
