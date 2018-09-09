@@ -25,6 +25,7 @@ sheets_to_load=['Hospitals', 'chains', 'facilities', 'Statuses', 'Sheet30', 'EKG
 
 # Creates a dictionary with each sheet from the Excel, sheet_name=None means load all sheets
 cp=pd.read_excel('Data/Cardiac Program_M.xlsx',sheet_name=sheets_to_load)
+cp.keys()
 cp['patient_enrollment_records'].columns
 
 # this helped me realize that records from the archive, have their Enrollment Records in the not-Archive. So merging is a necessity
@@ -34,6 +35,9 @@ cp['patient_enrollment_records'].columns
 # %% first explore Patients tab
 
 df=cp['patients']
+
+df.columns
+
 cut_columns =['Date_of_Birth', 'Patient_Gender', 'EF', 'Date of last echo',
         'cardiac_plan', 'patient_id','edit_time_stamp','Current_Facility_value', 'Current_Chain_value',
        'Report', 'Hospital_History', 'Archive_Patient', 'Last_Weight',
@@ -60,7 +64,7 @@ cut_columns2=['patient_link', 'Enrollment_Date', 'Hospital_discharged_from',
        'Hospital_Admit_Date', 'Admit_weight', 'Diagnosis_1', 'Diagnosis_2',
        'Acute_or_chronic', 'AICD', 'status', 'discharge',
        'to_which_hospital', 'reason_for_dc', 'discharge_date',
-       'cardiac_related', 'Enrollment_Active', 'Chain_link', ]
+       'cardiac_related', 'Enrollment_Active', 'Chain_link']
 per=per[cut_columns2]
 per['discharge'].value_counts()
 per['discharge'].isnull().sum()
@@ -79,13 +83,13 @@ df.shape
 df_total=pd.merge(df,enroll_date,on='patient_link',how='outer')
 df_total.shape
 
-df_total.to_csv('CardiacM_clean.csv')
+df_total.to_csv('CleanData/CardiacM_clean.csv')
 # %%
 
 plt.subplots(figsize=(20,15))
 heat=sns.heatmap(df_total.isnull(), cbar=False)
 # plt.xticks(rotation=75)
 fig=heat.get_figure()
-fig.savefig('cardiac_m_missingness.png',transparent=True, dpi=400,bbox_inches='tight' ,format='png')
+# fig.savefig('cardiac_m_missingness.png',transparent=True, dpi=400,bbox_inches='tight' ,format='png')
 
 # %%

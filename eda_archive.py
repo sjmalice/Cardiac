@@ -118,7 +118,7 @@ all_nodupes=pd.merge(all_nodupes,bnp_nodupes,on='patient_link',how='outer')
 all_nodupes.shape
 all_nodupes=pd.merge(all_nodupes,labs_nodupes,on='patient_link',how='outer')
 all_nodupes.shape
-all_nodupes.to_csv('ArchiveClean.csv')
+all_nodupes.to_csv('CleanData/ArchiveClean.csv')
 # test=all_nodupes.columns
 # heat=sns.heatmap(all_nodupes[test].isnull(), cbar=False)
 # %%
@@ -127,6 +127,6 @@ plt.subplots(figsize=(20,15))
 heat=sns.heatmap(all_nodupes.isnull(), cbar=False)
 # plt.xticks(rotation=75)
 fig=heat.get_figure()
-fig.savefig('archive_missingness.png',transparent=True, dpi=400,bbox_inches='tight' ,format='png')
+# fig.savefig('archive_missingness.png',transparent=True, dpi=400,bbox_inches='tight' ,format='png')
 
 # %%
