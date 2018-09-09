@@ -1,23 +1,7 @@
-import gspread
 import pandas as pd
-from oauth2client import file, client, tools
 import numpy as np
-import json
-
-# Get credentials
-# credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/MtSinai-3008a21e1f27.json'
-credentials='/Users/sophiegeoghan/Desktop/MtSinai/API_work/credentials_writer.json'
-
-store = file.Storage(credentials)
-creds = store.get()
-gc = gspread.authorize(creds)
-
-# %% load Google Sheet by Key Name
-# opens the Cardiac_M sheet from our google drive:
-gs = gc.open_by_key('1qRj0DHYNODEhMZGv1CGBIAgPJQjiBtKuHE68js8dS3A')
-gs.worksheets()
-
-# %%
+import gspread
+from oauth2client import file, client, tools
 
 def gsheet2pandas(gsheet):
     """ Convers Google Sheet data from Gspread package to a Pandas
@@ -47,14 +31,3 @@ def gExcel2pdDict(gexcel,sheet_names):
         all_dict[st]=tmp_df
         print('Loaded '+str(st)+' successfully')
     return all_dict
-test_st_names=['patients','patient_enrollment_records']
-cp=gExcel2pdDict(gs,test_st_names)
-
-cp['patients'].head(10)
-df=cp['patients']
-
-# %% Adding column of our predictions to the Google sheet
-worksheet=gs.worksheet('patients')
-dir(worksheet)
-
-worksheet.add_cols(1)

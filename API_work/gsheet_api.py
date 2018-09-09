@@ -18,9 +18,6 @@ gs.worksheets()
 
 st=gs.worksheet('patients')
 
-# st=gs.get_worksheet(12)
-gs = gc.open_by_key(KEYHERE)
-st=gs.get_worksheet(12)
 
 # %%
 

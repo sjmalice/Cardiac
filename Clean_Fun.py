@@ -5,6 +5,33 @@ import numpy as np
 import gspread
 from oauth2client import file, client, tools
 
+def outcome_split(df,outcome_dict={
+    'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
+    'Bad':['Hospital','Death'],
+    'Test':['In Nursing Facility','Skilled Nursing Facility (SNF)',
+    'Not approriate for program, removed']}):
+    """ Input dataframe and Outcome dictionary
+    Adds Train and Outcome columns to dataframe
+    """
+    outcome={}
+    train={}
+    for row in range(df.shape[0]):
+        if df.iloc[row]['status'] in outcome_dict['Good']:
+            outcome[df.iloc[row]['patient_link']]=1
+            train[df.iloc[row]['patient_link']]=1
+        if df.iloc[row]['status'] in outcome_dict['Bad']:
+            outcome[df.iloc[row]['patient_link']]=0
+            train[df.iloc[row]['patient_link']]=1
+        if df.iloc[row]['status'] in outcome_dict['Test']:
+            train[df.iloc[row]['patient_link']]=0
+        elif df.iloc[row]['discharge']==True:
+            train[df.iloc[row]['patient_link']]=1
+        elif df.iloc[row]['discharge']==False:
+            train[df.iloc[row]['patient_link']]=0
+    df['outcome']=df['patient_link'].map(outcome)
+    df['train']=df['patient_link'].map(train)
+    return df
+
 def choose_most_recent(df,date_col):
     ''' Choose the most recent lab/test result from list of results
     To Do: make the drop duplicates more robust since misses some patients
@@ -22,35 +49,6 @@ def choose_most_recent(df,date_col):
                 continue
         new_df=pd.concat([new_df, tmp_df], axis=0)
     return new_df.drop_duplicates()
-
-def gsheet2pandas(gsheet):
-    """ Convers Google Sheet data from Gspread package to a Pandas
-    dataframe """
-    header=gsheet.row_values(1) # for some reason this package indexes at 1
-    df = pd.DataFrame(columns=header)
-    all_records=gsheet.get_all_records()
-    for row in np.arange(len(gsheet.get_all_values())-1):
-        # print(row)
-        tmp_dict=all_records[row]
-        # tmp_row = np.array(gsheet.row_values(row)).reshape(1,len(header))
-        tmp_df = pd.DataFrame(tmp_dict, index=[row])
-        df = pd.concat([df,tmp_df], axis=0)
-    print('Google Sheet of size '+str(df.shape)+' successfully loaded')
-    return df
-
-def gExcel2pdDict(gexcel,sheet_names):
-    """
-    from Gspread Google Sheet Object, load all the specified tabs as
-    a Python dictionary, similar to Pandas from_excel
-    Uses gsheet2pandas function
-    """
-    all_dict={}
-    for st in sheet_names:
-        tmp_st=gexcel.worksheet(st)
-        tmp_df=gsheet2pandas(tmp_st)
-        all_dict[st]=tmp_df
-        print('Loaded '+str(st)+' successfully')
-    return all_dict
 
 def lower_errors(x):
     try:
