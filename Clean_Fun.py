@@ -31,6 +31,60 @@ def outcome_split(df,outcome_dict={
     df['train']=df['patient_link'].map(train)
     return df
 
+def ef_deep_clean(x):
+    """ helper function to clean_EF_rows
+    extracts any digits from string
+    recursively calls itself if there are too many digits
+    """
+    # remove EF from a previous record
+    if re.search('previous',x):
+        ind,__=re.search('previous',x).span()
+        return ef_deep_clean(x[:ind])
+    if re.search('(/)',x):
+        ind,__=re.search('(/)',x).span()
+        return ef_deep_clean(x[:ind-1])
+    else: # Creates a list of digits
+        tmp_dig=re.findall('\\b\\d+\\b', x)
+        if len(tmp_dig)>2:
+            print(x)
+            return clean_EF_rows('pending')
+        if len(tmp_dig)==2:
+            return (float(tmp_dig[0])+float(tmp_dig[1]))/200.0
+        if len(tmp_dig)==1:
+            return clean_EF_rows(tmp_dig[0])
+        # if there are really no digits, return na_val which corresponds to 'pending'
+        if len(tmp_dig)==0:
+            return clean_EF_rows('pending')
+
+def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered','done','no data','new admission']):
+    """ For use with a .apply(lambda) to the EF column
+    ie. df['ef'].apply(lambda x: clean_EF_rows(x))
+    Does not change NaN values, only messy string/percentages
+    """
+    #best case scenario: already a decimal or percentage with no sign
+    x=str(x).replace('<','')
+    x=str(x).replace('>','')
+    try:
+        if float(x)<1:
+            return float(x)
+        elif float(x)>10:
+            return float(x)/100
+    except:
+        # For the percentages like 55%:
+        x=str(x).replace('%','')
+        # for percentage ranges like 50-55%
+        try:
+            st,en=re.search('-',x).span()
+            # take the average
+            return (float(x[:st])+float(x[en:]))/200.0
+        except:
+            if x.lower() in list_strings:
+                return na_val
+            elif re.search('normal',x.lower()):
+                return norm_val
+            else: # deep clean extracts digits from string text
+                return ef_deep_clean(x)
+
 def choose_most_recent(df,date_col):
     ''' Choose the most recent lab/test result from list of results
     To Do: make the drop duplicates more robust since misses some patients
