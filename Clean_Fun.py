@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import re
 
 def outcome_split(df,outcome_dict={
     'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
