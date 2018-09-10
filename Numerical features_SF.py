@@ -6,8 +6,6 @@ import seaborn as sns
 
 from Clean_Fun import *
 
-# %%
-
 %matplotlib inline
 import matplotlib.pyplot as plt
 
@@ -16,7 +14,7 @@ cpa_sheets_load=['patient_enrollment_records', 'patient weights', 'patient BNP',
      'patient BP']
 
 #reading in the dataset
-numerical_data= pd.read_excel('Data/Cardiac Program_Archive.xlsx', sheet_name=cpa_sheets_load)
+numerical_data= pd.read_excel('C:/Users/Shani Fisher/Documents/Bootcamp/Capstone/data/Cardiac Program_Archive.xlsx', sheet_name=cpa_sheets_load)
 numerical_data.keys()
 
 #getting out the facility's so I could run more code on them
@@ -32,14 +30,7 @@ facility['facilities_link'] = facility['facilities_link'].astype(int)
 #hisogram plot
 sns.distplot(facility['facilities_link'])
 
-def clean_weights(df_weights,weight_col='weight',fill_na='0'):
-    """description here. of input and output
-    """
-    df_weights[weight_col]=patient_weight[weight_col].astype(str)
-    # lots of cleanings
-    return df_weights
 
-clean_weights(fill_na='33')
 
 patient_weight.keys()
 #patient_weight['weight']
@@ -49,7 +40,7 @@ patient_weight['weight']=patient_weight['weight'].astype(str)
 patient_weight['weight']=
 patient_weight['weight']=patient_weight['weight'].astype(str)
 
-type(patient_weight['weight'][1])
+type(patient_weight['weight'][1472])
 #patient_weight['weight'].str.replace('\W', '')
 
 re.findall(r'/^[0-9]+$/',patient_weight['weight'])
@@ -61,6 +52,46 @@ re.findall(r"Test([\d.]*\d+)", patient_weight['weight'])
 patient_weight['weight'].str.findall('(\d+)') #it decides that it is all an empty string
 #gives e/t NA's
 patient_weight['weight'].str.extract('(\d+)')#.astype(str)
+tips['total_dollar_re'] = tips.total_dollar.apply(lambda x: re.findall('\d+\.\d+', x)[0])
+df.A.str.extract('(\d+)')
+
+
+patient_weight['weight']=patient_weight['weight'].fillna(value='0')
+patient_weight['weight']=patient_weight['weight'].str.replace('n/a', '0')
+patient_weight['weight'].apply(lambda x: lower_errors(x)).unique()
+patient_weight['weight']=patient_weight['weight'].str.replace(',', '.')
+import traceback
+
+patient_weight['weight'].apply(lambda x: x.str.extract('(\d+)'))
+
+def lower_errors(df_df, col_name='weight'):
+    try:
+        return df_df[col_name].apply(lambda x: x.str.extract('(\d+)'))
+    except:
+        print(traceback.format_exc())
+patient_weight['weight']=list(map(lambda x : str(x) ,patient_weight['weight']))
+lower_errors(df_df = patient_weight)
+
+
+def clean_weights(df_weights,weight_col='weight',fill_na='0'):
+    """df_weghts=the dataframe and which page the column you want is onself."""
+    """weight_col=which column in the dataframe you would like"""
+    """ This function takes all the numbers from te colum and then plots them on a histogram
+    """
+    df_weights[weight_col]=patient_weight[weight_col].astype(str)
+    df_weights[weight_col]=df_weights[weight_col].str.replace('n/a', '0')
+    df_weights[weight_col]=df_weights[weight_col].str.replace(',', '.')
+    df_weights[weight_col].apply(lambda x: weight_col.str.extract('(\d+)'))
+    sns.distplot(df_weights['weight])
+    # lots of cleanings
+    return df_weights
+
+present_weight=clean_weights(df_weights=numerical_data['patient_weight'])
+addmitted_weight=clean_weights(df_weights=numerical_data['patient_enrollment_records'], weight_col='Admit_weight')
+
+#to get weight change I would minues the two things above as
+
+present_weight-addmitted_weight
 
 
 ''.join(e for e in patient_weight['weight'] if e.isalnum())
@@ -70,6 +101,7 @@ patient_weight['weight']=patient_weight['weight'].str.replace(' ()', '')
 patient_weight['weight']=patient_weight['weight'].str.replace('()', ' ')
 patient_weight['weight']=patient_weight['weight'].str.replace(' ', '')
 re.sub('\ |\?|\.|\!|\/|\,|\:', '', patient_weight['weight'])
+patient_weight.apply(lambda x: lower_errors(x))
 
 
 
@@ -83,6 +115,9 @@ patient_weight['weight']=pd.to_numeric(patient_weight['weight']).round(0).astype
 
 bp=numerical_data['patient BP']
 resting_hr=bp['resting_HR']
+
+resting.drop(resting.index[[1098,1233]])
+
 resting_hr=resting_hr.fillna(value='0')
 resting_hr.str.replace('n/a', '0', regex=False)
 resting_hr = resting_hr.iloc[1:]
@@ -112,3 +147,30 @@ last_numbers=last_numbers.str.replace('n/a', '0')
 last_numbers=last_numbers.fillna(value='0')
 last_numbers.astype(int)
 first_numbers/last_numbers
+
+
+
+B_N_P=numerical_data['patient BNP']
+B_N_P['BNP']=B_N_P['BNP'].replace(['^cancelled'], ['0'], regex=True)
+B_N_P['BNP']=B_N_P['BNP'].replace(['^can'], ['0'], regex=True)
+B_N_P['BNP']=B_N_P['BNP'].replace(['^c patient'], ['0'], regex=True)
+B_N_P['BNP']=B_N_P['BNP'].replace(['^c, patient refused'], ['0'], regex=True)
+B_N_P['BNP']=B_N_P['BNP'].replace(['^not visible in Visual'], ['0'], regex=True)
+B_N_P['BNP']=B_N_P['BNP'].astype(str)
+B_N_P['BNP']=pd.to_numeric(B_N_P['BNP']).round(0).astype(int)
+sns.distplot(B_N_P['BNP'])
+
+
+
+B_N_P=numerical_data['patient BNP']
+
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].astype(str)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].replace(['^cancelled'], ['0'], regex=True)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].replace(['^can'], ['0'], regex=True)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].replace(['^c patient'], ['0'], regex=True)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].replace(['^c, patient refused'], ['0'], regex=True)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].replace(['^not visible in Visual'], ['0'], regex=True)
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].fillna(value='0')
+B_N_P['This_BNP_Change']=B_N_P['This_BNP_Change'].str.replace('nan', '0')
+B_N_P['This_BNP_Change']=pd.to_numeric(B_N_P['This_BNP_Change']).round(0).astype(int)
+sns.distplot(B_N_P['This_BNP_Change'])
