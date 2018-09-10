@@ -86,6 +86,25 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
             else: # deep clean extracts digits from string text
                 return ef_deep_clean(x)
 
+def clean_diastolic_columns(di_sys,bp,col_type):
+    """ Imputes diastolic or systolic from the BP columns
+    col_type distinguishes between di or sys
+    Use like: df.apply(lambda row: clean_diastolic_columns(row['Diastolic'],row['resting_BP'],col_type='di'),axis=1)
+    """
+    try:
+        if np.isnan(di_sys):
+            sys_tmp,di_tmp=re.findall('\\b\\d+\\b', bp)
+            if col_type=='di':
+                return di_tmp
+            elif col_type=='sys':
+                return sys_tmp
+            else:
+                print("Error: please correct input variable col_type to be either 'di' or 'sys'")
+        else:
+            return di_sys
+    except:
+        pass
+
 def choose_most_recent(df,date_col):
     ''' Choose the most recent lab/test result from list of results
     To Do: make the drop duplicates more robust since misses some patients
