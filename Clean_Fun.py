@@ -3,6 +3,8 @@
 import pandas as pd
 import numpy as np
 import re
+import datetime
+import xlrd
 
 def cleaning_func(df, var, impute):
     #lowercase all values
@@ -288,3 +290,44 @@ def search_for_test(x,search_word):
         return re.search(search_word,x.lower())!= None
     except:
         return False
+
+def datetime_fixer(date_list):
+    """
+    Converts a list (or Pandas Series) to datetime objects
+
+    Keyword Arguments
+    -----------------
+    date_list -- A list or Pandas Series containing date-like elements
+    """
+    # Checks if object is a Pandas Series and converts it to a list if true
+    if isinstance(date_list, pd.core.series.Series):
+        date_list = list(date_list)
+
+    nats_added = 0
+
+    for i in range(len(date_list)):
+        # If the date is not a datetime
+        if not isinstance(date_list[i], datetime.datetime):
+            # If this date is an int
+            if isinstance(date_list[i], int):
+                if date_list[i] > 1000:
+                    # Convert Excel style date to datetime
+                    date_list[i] = datetime.datetime(*xlrd.xldate_as_tuple(date_list[i], 0))
+                else:
+                    date_list[i] = np.datetime64('NaT')
+                    nats_added += 1
+            # If this date is a string
+            elif isinstance(date_list[i], str):
+                # Try to convert to datetime using this format
+                try:
+                    date_list[i] = datetime.strptime(date_list[i], '%m/%d/%Y')
+                    # If error, replace with NaT
+                except:
+                    date_list[i] = np.datetime64('NaT')
+                    nats_added += 1
+            else:
+                date_list[i] = np.datetime64('NaT')
+                nats_added += 1
+
+    print('{} NaT added to list'.format(nats_added))
+    return date_list
