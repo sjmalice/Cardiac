@@ -4,6 +4,59 @@ import pandas as pd
 import numpy as np
 import re
 
+def cleaning_func(df, var, impute):
+    #lowercase all values
+    df[var]=df[var].str.lower()
+
+    #fill missing w/impute value
+    df[var]=df[var].fillna(impute)
+
+    #set all values that indicate absence of value to zero
+    none_values=list(set(df.loc[df[var].str.contains('none', na=False)][var].tolist()))
+    allergy_values=list(set(df.loc[df[var].str.contains('allergic', na=False)][var].tolist()))
+    zero_values=none_values+allergy_values
+    df.loc[df[var].isin(zero_values),var]=0
+    df.loc[df[var].isin(['0']), var]=0
+
+    #Variables AICD and Acute_or_chronic
+    if var=='aicd':
+        df=df.replace({'aicd':{'no':0, 'no aicd or pacemaker':0, '0' : 0,'0.25':0, '25%':0, 'o':0, '9/13/2017' : 0, 'lisinopril':0}})
+    if var=='acute_or_chronic':
+        df=df.replace({'acute_or_chronic':{'acute':0, 'chronic':1}})
+
+    #set all other values to 1
+    allowed_vals=[0, impute]
+    print(df.loc[~df[var].isin(allowed_vals), var].tolist())
+    df.loc[~df[var].isin(allowed_vals), var] = 1
+
+    df[var]=df[var].astype(float)
+
+    print(df[var].value_counts())
+
+    return df
+
+def remove_cardiac_unrelated(df):
+    """ Remove rows that are not cardiac related
+    Mutating function
+    """
+    ind_cardiac=df.loc[df['cardiac_related']==False].index
+    if len(ind_cardiac)!=0:
+        # print and remove them
+        for i in ind_cardiac:
+            print("Removing Cardiac Unrelated Row: "+str(i)+"\n")
+            try:
+                print(df.iloc[i][['patient_link','Enrollment_Date','status','patient_name','cardiac_related']])
+            except:
+                print(df.iloc[i][['patient_link','cardiac_related']])
+            print('-'*50)
+        # now remove them
+        df.drop(ind_inv,axis=0,inplace=True)
+    # reset the index before moving on
+    df=df.reset_index()
+    print('\n \n Dropped '+str(len(ind_cardiac)+len(ind_cardiac))+' rows from the dataset')
+    print('New size of dataset: '+str(df.shape))
+    return df
+
 def outcome_split(df,outcome_dict={
     'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
     'Bad':['Hospital','Death'],
@@ -11,7 +64,6 @@ def outcome_split(df,outcome_dict={
     'Not approriate for program, removed']}):
     """ Input dataframe and Outcome dictionary
     Adds Train and Outcome columns to dataframe
-    TO DO: Drop patient altogether if cardiac_related
     """
     outcome={}
     train={}
@@ -31,6 +83,7 @@ def outcome_split(df,outcome_dict={
     df['outcome']=df['patient_link'].map(outcome)
     df['train']=df['patient_link'].map(train)
     return df
+
 
 def ef_deep_clean(x):
     """ helper function to clean_EF_rows
@@ -85,6 +138,25 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
                 return norm_val
             else: # deep clean extracts digits from string text
                 return ef_deep_clean(x)
+
+def clean_diastolic_columns(di_sys,bp,col_type):
+    """ Imputes diastolic or systolic from the BP columns
+    col_type distinguishes between di or sys
+    Use like: df.apply(lambda row: clean_diastolic_columns(row['Diastolic'],row['resting_BP'],col_type='di'),axis=1)
+    """
+    try:
+        if np.isnan(di_sys):
+            sys_tmp,di_tmp=re.findall('\\b\\d+\\b', bp)
+            if col_type=='di':
+                return di_tmp
+            elif col_type=='sys':
+                return sys_tmp
+            else:
+                print("Error: please correct input variable col_type to be either 'di' or 'sys'")
+        else:
+            return di_sys
+    except:
+        pass
 
 def choose_most_recent(df,date_col):
     ''' Choose the most recent lab/test result from list of results
@@ -152,3 +224,67 @@ def dummify_diagnoses(df,unique_diag,diagnosis_col='Diagnosis_1'):
         dummy_diag = pd.concat([dummy_diag,tmp_dummy_diag], axis=0)
 
     return dummy_diag
+
+def impute_from_special_status(status_row,special_row):
+    """ If status is empy and special status is Death, put Death into status
+    use like:  df.apply(lambda row: impute_from_special_status(row['status'],row['special_status']),axis=1)
+    """
+    try:
+        if np.isnan(status_row):
+            if special_row=='Death':
+                return 'Death'
+            else:
+                return status_row
+    except:
+        return status_row
+
+def remove_invalid_rows(df):
+    """ Takes the dataframe and removes specific instances where we have found
+    invalid rows - when there is a row like: 1 2 3 ....
+    or a test patient created by multitechvisions
+    Check patient name for TEST, or for John Doe and Sally Test
+    Should drop row "create_user", afterwards
+    """
+    # find the index of invalid rows
+    ind_inv=df.loc[df['patient_link'].apply(lambda x: True if len(str(x))<3 else False)].index
+    ind_inv=ind_inv.append(df.loc[df['patient_name'].apply(lambda x: search_for_test(x,'test'))].index)
+    ind_inv=ind_inv.append(df.loc[df['patient_name'].apply(lambda x: search_for_test(x,'john doe'))].index)
+    if len(ind_inv)!=0:
+        # print and remove them
+        for i in ind_inv:
+            print("removing invalid row: "+str(i)+"\n")
+            try:
+                print(df.iloc[i][['patient_link','Enrollment_Date','patient_name','create_user']])
+            except:
+                print(df.iloc[i]['patient_link'])
+            print('-'*50)
+        # now remove them
+        df.drop(ind_inv,axis=0,inplace=True)
+    # reset the index before moving on
+    df=df.reset_index()
+
+    # Could remove this section since now we caught them with the 'test' search. But just in case
+    # find observations from Test
+    ind_test=df.loc[df['create_user']=='multitechvisions@gmail.com'].index#[['patient_link','Enrollment_Date','patient_name','create_user']]
+    if len(ind_test)!=0:
+        df.iloc[ind_test]
+        print("removing multitechvisions test rows: \n")
+        try:
+            print(df.iloc[ind_test][['patient_link','Enrollment_Date','patient_name','create_user']])
+        except:
+            print(df.iloc[ind_test]['patient_link'])
+        print('-'*50)
+        df.drop(ind_test,axis=0,inplace=True)
+    print('\n \n Dropped '+str(len(ind_inv)+len(ind_test))+' rows from the dataset')
+    print('New size of dataset: '+str(df.shape))
+    return df
+
+# maybe there's an errors coerce function
+def search_for_test(x,search_word):
+    """ Handles errors and search for 'test' in the input variable
+    Use as df.loc[df['patient_name'].apply(lambda x: search_for_test(x,'test'))]
+    """
+    try:
+        return re.search(search_word,x.lower())!= None
+    except:
+        return False
