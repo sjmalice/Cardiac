@@ -6,7 +6,44 @@ import re
 import datetime
 import xlrd
 
-def cleaning_func(df, var, impute):
+def weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2):
+    """
+    This function adds duration and age columns and naively
+    cleans the weight_change_since_admit.
+    duration (type int, expressed in days) is difference of discharge_date and
+    admission_date if discharge is true, otherwise duration is time since admission_dateself.
+    age (type int, expressed in years) is deduced from birth date
+
+    If weight_change_since_admit/ weight < 0.2:
+    weight_change_since_admit (float, expressed in pounds) is divided by 10
+    otherwise it is unchanged.
+    Mutating function
+    Author: Aungshuman
+    """
+    ## duration
+    today = pd.to_datetime('today')
+    df.loc[df['discharge']==True,'duration'] = (pd.to_datetime(df.loc[df['discharge']==True, \
+        'discharge_date']) - pd.to_datetime(df.loc[df['discharge']==True,'enrollment_date']))
+    df.loc[df['discharge']==False,'duration'] = (today - \
+        pd.to_datetime(df.loc[df['discharge']==False,'enrollment_date']))
+    df.duration = df.duration.fillna(dur_na)
+    try:
+        df['duration'] = (df['duration'] / np.timedelta64(1, 'D')).astype(int)
+        df.loc[(df['duration']<1)&(df['duration']!=dur_na), 'duration']=dur_na
+    except:
+        print(df['duration'])
+    ##age
+    df['age'] = (today - pd.to_datetime(df['date_of_birth'])).apply(lambda x: \
+        float(x.days)/365).fillna(age_na).astype(int)
+    df.loc[(df.age<1)&(df.age!=age_na), 'age'] = age_na
+    ## weight_change_since_admit
+    df['weight_change_since_admit'] = np.where(abs(df['weight_change_since_admit']/ \
+        df['weight']) < weight_perc_cutoff, df['weight_change_since_admit'], df['weight_change_since_admit']/10)
+
+def med_aicd_clean(df, var, impute):
+    """ Mutating Function
+    Use as: med_aicd_clean(df,'ace', 0) for all medicines
+    """
     #lowercase all values
     df[var]=df[var].str.lower()
 
@@ -28,6 +65,7 @@ def cleaning_func(df, var, impute):
 
     #set all other values to 1
     allowed_vals=[0, impute]
+    print("Values set to 1.0: \n")
     print(df.loc[~df[var].isin(allowed_vals), var].tolist())
     df.loc[~df[var].isin(allowed_vals), var] = 1
 
@@ -35,7 +73,7 @@ def cleaning_func(df, var, impute):
 
     print(df[var].value_counts())
 
-    return df
+    # return df
 
 def remove_cardiac_unrelated(df):
     """ Remove rows that are not cardiac related
@@ -52,12 +90,12 @@ def remove_cardiac_unrelated(df):
                 print(df.iloc[i][['patient_link','cardiac_related']])
             print('-'*50)
         # now remove them
-        df.drop(ind_inv,axis=0,inplace=True)
+        df.drop(ind_cardiac,axis=0,inplace=True)
     # reset the index before moving on
     df=df.reset_index()
     print('\n \n Dropped '+str(len(ind_cardiac)+len(ind_cardiac))+' rows from the dataset')
     print('New size of dataset: '+str(df.shape))
-    return df
+    # return df
 
 def outcome_split(df,outcome_dict={
     'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
@@ -66,6 +104,7 @@ def outcome_split(df,outcome_dict={
     'Not approriate for program, removed']}):
     """ Input dataframe and Outcome dictionary
     Adds Train and Outcome columns to dataframe
+    Mutating function
     """
     outcome={}
     train={}
@@ -84,7 +123,8 @@ def outcome_split(df,outcome_dict={
             train[df.iloc[row]['patient_link']]=0
     df['outcome']=df['patient_link'].map(outcome)
     df['train']=df['patient_link'].map(train)
-    return df
+    print("Successfully added two columns, Train, and Outcome")
+    # return df
 
 
 def ef_deep_clean(x):
@@ -102,6 +142,7 @@ def ef_deep_clean(x):
     else: # Creates a list of digits
         tmp_dig=re.findall('\\b\\d+\\b', x)
         if len(tmp_dig)>2:
+            print("Couldn't extract EF so set to na_val")
             print(x)
             return clean_EF_rows('pending')
         if len(tmp_dig)==2:
@@ -157,6 +198,7 @@ def clean_diastolic_columns(di_sys,bp,col_type):
                 print("Error: please correct input variable col_type to be either 'di' or 'sys'")
         else:
             return di_sys
+        print("Imputing {},{} from Blood Pressure Column".format(sys_tmp,di_tmp))
     except:
         pass
 
@@ -188,6 +230,8 @@ def find_unique_diag(df_diag_column):
     """
     Within text Diagnosis Columns, returns a list of the Unique Diagnoses,
     removing the combinations of diagnoses
+    Use as: uniq_diag=find_unique_diag(df.Diagnosis_1)
+    and use this output within the dummify diagnoses function
     """
     all_diag=df_diag_column.apply(lambda x: lower_errors(x)).unique()
     all_diag[7].split(' , ')
@@ -201,11 +245,13 @@ def find_unique_diag(df_diag_column):
     unique_diag=pd.Series(flat_list).unique()
     return unique_diag
 
-def dummify_diagnoses(df,unique_diag,diagnosis_col='Diagnosis_1'):
+def dummify_diagnoses(df,unique_diag,diagnosis_col='diagnosis_1'):
     """
     Takes Diagnoses and dummifies them for patients. If a patient has multiple
     diagnoses, will put a 1 in all relevant Diagnoses.
     The kth column is NA, no diagnosis. Maybe we will impute with the mode?
+    Use as: dummy_df_diag=dummify_diagnoses(df,uniq_diag)
+
     """
     header=unique_diag.tolist().append('patient_link')
     dummy_diag=pd.DataFrame(columns=header)
@@ -234,6 +280,7 @@ def impute_from_special_status(status_row,special_row):
     try:
         if np.isnan(status_row):
             if special_row=='Death':
+                print('Added to status from special status')
                 return 'Death'
             else:
                 return status_row
@@ -246,6 +293,7 @@ def remove_invalid_rows(df):
     or a test patient created by multitechvisions
     Check patient name for TEST, or for John Doe and Sally Test
     Should drop row "create_user", afterwards
+    Mutating function
     """
     # find the index of invalid rows
     ind_inv=df.loc[df['patient_link'].apply(lambda x: True if len(str(x))<3 else False)].index
@@ -279,7 +327,7 @@ def remove_invalid_rows(df):
         df.drop(ind_test,axis=0,inplace=True)
     print('\n \n Dropped '+str(len(ind_inv)+len(ind_test))+' rows from the dataset')
     print('New size of dataset: '+str(df.shape))
-    return df
+    # return df
 
 # maybe there's an errors coerce function
 def search_for_test(x,search_word):
