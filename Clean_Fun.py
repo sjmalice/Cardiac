@@ -4,6 +4,59 @@ import pandas as pd
 import numpy as np
 import re
 
+def cleaning_func(df, var, impute):
+    #lowercase all values
+    df[var]=df[var].str.lower()
+
+    #fill missing w/impute value
+    df[var]=df[var].fillna(impute)
+
+    #set all values that indicate absence of value to zero
+    none_values=list(set(df.loc[df[var].str.contains('none', na=False)][var].tolist()))
+    allergy_values=list(set(df.loc[df[var].str.contains('allergic', na=False)][var].tolist()))
+    zero_values=none_values+allergy_values
+    df.loc[df[var].isin(zero_values),var]=0
+    df.loc[df[var].isin(['0']), var]=0
+
+    #Variables AICD and Acute_or_chronic
+    if var=='aicd':
+        df=df.replace({'aicd':{'no':0, 'no aicd or pacemaker':0, '0' : 0,'0.25':0, '25%':0, 'o':0, '9/13/2017' : 0, 'lisinopril':0}})
+    if var=='acute_or_chronic':
+        df=df.replace({'acute_or_chronic':{'acute':0, 'chronic':1}})
+
+    #set all other values to 1
+    allowed_vals=[0, impute]
+    print(df.loc[~df[var].isin(allowed_vals), var].tolist())
+    df.loc[~df[var].isin(allowed_vals), var] = 1
+
+    df[var]=df[var].astype(float)
+
+    print(df[var].value_counts())
+
+    return df
+
+def remove_cardiac_unrelated(df):
+    """ Remove rows that are not cardiac related
+    Mutating function
+    """
+    ind_cardiac=df.loc[df['cardiac_related']==False].index
+    if len(ind_cardiac)!=0:
+        # print and remove them
+        for i in ind_cardiac:
+            print("Removing Cardiac Unrelated Row: "+str(i)+"\n")
+            try:
+                print(df.iloc[i][['patient_link','Enrollment_Date','status','patient_name','cardiac_related']])
+            except:
+                print(df.iloc[i][['patient_link','cardiac_related']])
+            print('-'*50)
+        # now remove them
+        df.drop(ind_inv,axis=0,inplace=True)
+    # reset the index before moving on
+    df=df.reset_index()
+    print('\n \n Dropped '+str(len(ind_cardiac)+len(ind_cardiac))+' rows from the dataset')
+    print('New size of dataset: '+str(df.shape))
+    return df
+
 def outcome_split(df,outcome_dict={
     'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
     'Bad':['Hospital','Death'],
