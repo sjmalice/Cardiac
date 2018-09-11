@@ -6,20 +6,29 @@ import seaborn as sns
 from Clean_Fun import *
 
 # %%
+pat='BROu2yr6'
+cpa=pd.read_excel('Data/Cardiac Program_Archive.xlsx',sheet_name='patient_enrollment_records')
+cpa.columns
+
+cpa[cpa['patient_link']==pat][['patient_link','Enrollment_Date','facilities_link','Hospital_discharged_from','Diagnosis_1','discharge_date','status']]
+
+# %%
 
 cpa_sheets_load=['patient_enrollment_records', 'patient weights', 'patient BNP',
     'Cardiac_Meds','patient labs', 'patient BP', 'notes',"Old notes (Don't fit structure)"]
-cpa=pd.read_excel('Data/Cardiac Program_Archive.xlsx',sheet_name=cpa_sheets_load)
+
+cpa=pd.read_excel('Data/Cardiac Program_Archive.xlsx',sheet_name='patient_enrollment_records')
 cpa.keys()
 
-df=cpa['patient_enrollment_records']
+df=cpa#['patient_enrollment_records']
 df=df.drop(df.loc[df['patient_link'].apply(lambda x: True if len(str(x))<3 else False)].index)
 
 df=outcome_split(df)
 
 df2=df[df['train']==1]
 test=df2[df2['outcome'].isnull()]
-test[['patient_link','status','discharge','outcome','train','reason_for_dc']]
+test.shape
+test[['patient_link','status','discharge','outcome','train','to_which_hospital']]
 test.reason_for_dc.value_counts()
 
 df.train.value_counts()
@@ -67,6 +76,7 @@ def outcome_split(df,outcome_dict={
             train[df.iloc[row]['patient_link']]=1
         if df.iloc[row]['status'] in outcome_dict['Test']:
             train[df.iloc[row]['patient_link']]=0
+        # now if status is empty
         elif df.iloc[row]['discharge']==True:
             train[df.iloc[row]['patient_link']]=1
         elif df.iloc[row]['discharge']==False:
