@@ -61,10 +61,10 @@ med_aicd_clean(df,'aicd', 0)
 
 weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2)
 remove_invalid_rows(df)
+
 # %%
 pd.set_option('display.max_columns', 60)
 df.drop_duplicates(inplace=True)
 df.reset_index(inplace=True)
 df.drop(columns=['index'], inplace=True)
 df
-test_df
