@@ -15,7 +15,7 @@ archive_path='Data/Cardiac Program_Archive.xlsx'
 live_sheet_pkl='pickle_jar/live_sheets.pkl'
 archive_sheet_pkl='pickle_jar/archive_sheets.pkl'
 datecol_pkl='pickle_jar/datecols.pkl'
-df_dict=sheet_merge(live_path, archive_path,
+df = sheet_merge(live_path, archive_path,
     live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
 
 
