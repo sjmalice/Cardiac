@@ -8,7 +8,7 @@ from Clean_Fun import *
 
 # %% Load dataset
 
-file_path='Data/Cardiac Program_M.xlsx'
+file_path='Data/Cardiac Program_M2.xlsx'
 sheet_pkl='pickle_jar/live_sheets.pkl'
 datecol_pkl='pickle_jar/live_datecols.pkl'
 df=live_sheet_merge(file_path, sheet_pkl, datecol_pkl)
@@ -22,13 +22,9 @@ df=live_sheet_merge(file_path, sheet_pkl, datecol_pkl)
 # classification model and keep cardiac related in our dataset?
 # remove_cardiac_unrelated(df)
 
-outcome_split(df)
-df.columns
-df.train.value_counts()
-df.status=df.apply(lambda row: impute_from_special_status(
-    row['status'],row['special_status']),axis=1)
-# something like this to remove test set
-# test=df[~df['train']]
+train_df,test_df=train_test_split_sg(df)
+
+df=train_df.copy() # for now
 
 # %% Clean effusion rate
 

@@ -95,7 +95,7 @@ def remove_cardiac_unrelated(df):
     print('New size of dataset: '+str(df.shape))
     # return df
 
-def outcome_split(df,outcome_dict={
+def determine_outcome_train_test(df,outcome_dict={
     'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
     'Bad':['Hospital','Death'],
     'Test':['In Nursing Facility','Skilled Nursing Facility (SNF)',
@@ -104,6 +104,10 @@ def outcome_split(df,outcome_dict={
     Adds Train and Outcome columns to dataframe
     Mutating function
     """
+    #first do quick imputations to status
+    df.status=df.apply(lambda row: impute_from_special_status(
+        row['status'],row['special_status']),axis=1)
+
     outcome={}
     train={}
     for row in range(df.shape[0]):
@@ -122,8 +126,28 @@ def outcome_split(df,outcome_dict={
     df['outcome']=df['patient_link'].map(outcome)
     df['train']=df['patient_link'].map(train)
     print("Successfully added two columns, Train, and Outcome")
-    # return df
+    return df
 
+def train_test_split_sg(df):
+    """
+    returns two datasets, train and test
+
+    if you haven't already run determine_outcome_train_test(df), will call it first
+    """
+    try:
+        lost_df=df.loc[df.train.isnull()][['patient_link','date_of_birth','facilities_link','special_status','enrollment_date','discharge_date','status']]
+        print('{} patients dropped due to unknown outcome: \n'.format(lost_df.shape[0]))
+        print(lost_df.sample(10))
+
+        train_ind=df.loc[df.train==1].index
+        train_df=df.iloc[train_ind].drop('train',axis=1)
+        train_df=train_df.reset_index().drop('index',axis=1)
+        test_ind=df.loc[df.train==0].index
+        test_df=df.iloc[test_ind].drop('train',axis=1).reset_index().drop('index',axis=1)
+        return train_df, test_df
+    except:
+        print("Calculating outcome first with determine_outcome_train_test()\n")
+        return train_test_split_sg(determine_outcome_train_test(df))
 
 def ef_deep_clean(x):
     """ helper function to clean_EF_rows
