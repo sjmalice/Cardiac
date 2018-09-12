@@ -5,7 +5,7 @@ import pickle
 from Clean_Fun import *
 from enrollId import *
 
-def pairwise_sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_path, datecol_pkl_path):
+def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_path, datecol_pkl_path):
     """
     Concatonates pairs of sheets from two different spreadsheets, retaining only the sheets and columns specified
     in pickles. Returns a dictionary with keys as sheet names and values as concatonated dataframes.
