@@ -47,7 +47,7 @@ def addEnrollId(df, date_col, rootDf):
     # greater than enrollment_date. Earlier enrollment_date are checked first
     # and overwritten when later dates are checked after
     for i in rootDf.index:
-        df["enrollId"][(df.patient_link == rootDf.patient_link[i]) &\
-        (df[date_col] >= rootDf.enrollment_date[i])]\
+        df.loc[(df.patient_link == rootDf.patient_link[i]) &\
+        (df[date_col] >= rootDf.enrollment_date[i]), "enrollId"]\
         = rootDf.enrollId[i]
     return(df)
