@@ -17,10 +17,6 @@ archive_sheet_pkl='pickle_jar/archive_sheets.pkl'
 datecol_pkl='pickle_jar/datecols.pkl'
 df_dict=sheet_merge(live_path, archive_path,
     live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
-df_dict.keys()
-for key in df_dict.keys():
-    print(key+":\n")
-    print(df_dict[key].columns)
 
 
 # %% test patients, determing Response Value
