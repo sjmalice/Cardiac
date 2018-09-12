@@ -24,7 +24,8 @@ def generateEnrollId(df, columns = ['patient_link', 'enrollment_date']):
             visitNo.append(1)
     newKey['visitNo'] = visitNo
     #add new enrollId feature that's unique for each new visit
-    newKey['enrollId'] = newKey.patient_link + '#' + newKey.visitNo.map(str)
+    newKey['enrollId'] =\
+    newKey.patient_link.map(str) + '#' + newKey.visitNo.map(str)
     return(newKey)
 
 def addEnrollId(df, date_col, rootDf):
