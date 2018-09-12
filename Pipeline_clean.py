@@ -8,27 +8,25 @@ from Clean_Fun import *
 
 # %% Load dataset
 
-file_path='Data/Cardiac Program_M.xlsx'
-sheet_pkl='pickle_jar/live_sheets.pkl'
-datecol_pkl='pickle_jar/live_datecols.pkl'
-df=live_sheet_merge(file_path, sheet_pkl, datecol_pkl)
+live_path='Data/Cardiac Program_M.xlsx'
+archive_path='Data/Cardiac Program_Archive.xlsx'
+live_sheet_pkl='pickle_jar/live_sheets.pkl'
+archive_sheet_pkl='pickle_jar/archive_sheets.pkl'
+datecol_pkl='pickle_jar/datecols.pkl'
+df=pairwise_sheet_merge(live_path, archive_path,
+    live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
 
-# df=pd.read_csv('cardiac.csv')
-# df=df.drop('Unnamed: 0',axis=1)
+# %%
+from enrollId import *
+generateEnrollId(df['patient_enrollment_records'])
 
-# %% Dropping cardiac related, test patients, determing Response Value
+# %% test patients, determing Response Value
 
-# let's talk about removing cardiac related - maybe we pursue multiple
-# classification model and keep cardiac related in our dataset?
-# remove_cardiac_unrelated(df)
+# NOTE have to remove invalid rows
 
-outcome_split(df)
-df.columns
-df.train.value_counts()
-df.status=df.apply(lambda row: impute_from_special_status(
-    row['status'],row['special_status']),axis=1)
-# something like this to remove test set
-# test=df[~df['train']]
+train_df,test_df=train_test_split_sg(df)
+df=train_df.copy() # for now
+del test_df
 
 # %% Clean effusion rate
 
