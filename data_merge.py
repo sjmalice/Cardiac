@@ -44,6 +44,7 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
 
     # Convert all column names to lowercase for consistancy
     # For each sheet dataframe, keep only the specified columns
+    print('Live Sheet:')
     for sheet_name in live_sheets:
         live_df_dict[sheet_name].columns = [x.lower().strip() for x in live_df_dict[sheet_name].columns]
         live_df_dict[sheet_name] = live_df_dict[sheet_name][list(map(str.lower, live_sheet_dict[sheet_name]))]
@@ -52,6 +53,7 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
     print('\n')
 
     # Repeat for archive sheets
+    print('Archive Sheet:')
     for sheet_name in archive_sheets:
         archive_df_dict[sheet_name].columns = [x.lower().strip() for x in archive_df_dict[sheet_name].columns]
         archive_df_dict[sheet_name] = archive_df_dict[sheet_name][list(map(str.lower, archive_sheet_dict[sheet_name]))]
@@ -64,11 +66,10 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
         live_df_dict[sheet_name][datecol_dict[sheet_name]] = datetime_fixer(live_df_dict[sheet_name][datecol_dict[sheet_name]])
         archive_df_dict[sheet_name][datecol_dict[sheet_name]] = datetime_fixer(archive_df_dict[sheet_name][datecol_dict[sheet_name]])
         print('Date column "{}" in sheet "{}" has been converted to appropriate datatype\n'.format(datecol_dict[sheet_name], sheet_name))
-    print('\n')
 
     live_df_dict['patients']['date_of_birth'] = datetime_fixer(live_df_dict['patients']['date_of_birth'])
     print('Date column "date_of_birth" in sheet "patients" has been converted to appropriate datatype')
-
+    print('\n')
     combined_df_dict = {}
 
     # Concatonate pairs of sheets and store in new combined_df_dict
@@ -94,14 +95,14 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
     print('\n')
 
     # Merge patients sheet with patient_enrollment_records manually because patients does not have an enrollId column
-    full_df = pd.merge(combined_df_dict['patients'], combined_df_dict['patient_enrollment_records'], on='patient_link', how='outer')
+    full_df = pd.merge(combined_df_dict['patients'], combined_df_dict['patient_enrollment_records'], on='patient_link', how='inner')
 
     # Merge the rest of the dataframes on enrollId
     for sheet_name in archive_sheets:
         if sheet_name != 'patient_enrollment_records':
             init_length = len(full_df)
             combined_df_dict[sheet_name].drop(columns='patient_link', inplace=True)
-            full_df = pd.merge(full_df, combined_df_dict[sheet_name], on='enrollId', how='outer')
+            full_df = pd.merge(full_df, combined_df_dict[sheet_name], on='enrollId', how='inner')
             print('Merged sheet "{}" with the full dataframe and changed the row number by {}'.format(sheet_name, (len(full_df)-init_length)))
     print('\n')
     print('DATA MERGE IS COMPLETE')
