@@ -18,18 +18,19 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
     of column names (values) for each sheet (i.e. {sheet1_name: [col1, col2,...coln], sheet2_name: [col1,...]})
     archive_sheet_pkl_path -- Same as live_sheet_pkl_path but for the archive spreadsheet
     datecol_pkl_path -- Path to pickle containing dictionary of sheets as keys and their associated date columns
+
+    Returns
+    -------
+    Fully merged dataframe
     """
     # Load live sheet dictionary from pickle
-    with open(live_sheet_pkl_path, 'rb') as f:
-        live_sheet_dict = pickle.load(f)
+    live_sheet_dict = read_pkl(live_sheet_pkl_path)
 
     # Load archive sheet dictionary from pickle
-    with open(archive_sheet_pkl_path, 'rb') as f:
-        archive_sheet_dict = pickle.load(f)
+    archive_sheet_dict = read_pkl(archive_sheet_pkl_path)
 
     # Load date columns from pickle
-    with open(datecol_pkl_path, 'rb') as f:
-        datecol_dict = pickle.load(f)
+    datecol_dict = read_pkl(datecol_pkl_path)
 
     # Store sheet dictionary keys as variables and load dataframe dictionaries from spreadsheets
     archive_sheets = list(archive_sheet_dict.keys())
@@ -89,14 +90,14 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
             print('Reduced sheet "{}" from {} rows to {} rows by filtering most recent dates\n'.format(sheet_name, init_length, len(combined_df_dict[sheet_name])))
 
     # Merge patients sheet with patient_enrollment_records manually because patients does not have an enrollId column
-    full_df = pd.merge(combined_df_dict['patients'], combined_df_dict['patient_enrollment_records'], on='patient_link', how='inner')
+    full_df = pd.merge(combined_df_dict['patients'], combined_df_dict['patient_enrollment_records'], on='patient_link', how='outer')
 
     # Merge the rest of the dataframes on enrollId
     for sheet_name in archive_sheets:
         if sheet_name != 'patient_enrollment_records':
             init_length = len(full_df)
             combined_df_dict[sheet_name].drop(columns='patient_link', inplace=True)
-            full_df = pd.merge(full_df, combined_df_dict[sheet_name], on='enrollId', how='inner')
+            full_df = pd.merge(full_df, combined_df_dict[sheet_name], on='enrollId', how='outer')
             print('Merged sheet "{}" with the full dataframe and changed the row number by {}\n'.format(sheet_name, (len(full_df)-init_length)))
 
     print('DATA MERGE IS COMPLETE')

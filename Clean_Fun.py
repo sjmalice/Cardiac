@@ -230,18 +230,18 @@ def choose_most_recent(df,date_col):
     ''' Choose the most recent lab/test result from list of results
     To Do: make the drop duplicates more robust since misses some patients
     '''
-    new_df=pd.DataFrame(columns=df.columns)
+    new_df = pd.DataFrame(columns=df.columns)
     for pat in df.enrollId.unique():
-        pat_df=df.loc[df.enrollId==pat]
-        rows,col =pat_df.shape
-        if rows==1:
-            tmp_df=pat_df
+        pat_df = df.loc[df.enrollId==pat]
+        rows,col = pat_df.shape
+        if rows == 1:
+            tmp_df = pat_df
         else:
             try:
-                tmp_df=pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
+                tmp_df = pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
             except:
                 continue
-        new_df=pd.concat([new_df, tmp_df], axis=0)
+        new_df = pd.concat([new_df, tmp_df], axis=0)
     return new_df.drop_duplicates()
 
 def lower_errors(x):
@@ -368,8 +368,12 @@ def datetime_fixer(date_list):
     Converts a list (or Pandas Series) to datetime objects
 
     Keyword Arguments
-    -----------------
+    =================
     date_list -- A list or Pandas Series containing date-like elements
+
+    Returns
+    =======
+    List of dates all with datetime data type
     """
     # Checks if object is a Pandas Series and converts it to a list if true
     if isinstance(date_list, pd.core.series.Series):
@@ -403,3 +407,36 @@ def datetime_fixer(date_list):
 
     print('{} NaT added to list'.format(nats_added))
     return date_list
+
+def read_pkl(pkl_path):
+    """Reads a pickle from file path and returns the object
+
+    Keyword Arguments
+    =================
+    pkl_path -- Path to pickle file
+
+    Returns
+    =======
+    Object stored in pickle file
+    """
+    with open(pkl_path, 'rb') as f:
+        return pickle.load(f)
+
+def write_pkl(my_obj, output_path):
+    """Writes an object to a pickle
+    WARNING: OVERWRITES FILE
+
+    Keyword Arguments
+    =================
+    my_obj -- Object to be written to a pickle
+    output_path -- Designated file name to be saved as
+    WILL OVERWRITE FILE
+
+    Returns
+    =======
+    Prints that file was saved
+    """
+
+    with open(output_path, 'wb') as f:
+        pickle.dump(my_obj, f)
+    print('Object saved to path "{}"'.format(output_path))
