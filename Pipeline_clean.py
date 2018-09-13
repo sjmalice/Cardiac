@@ -7,7 +7,6 @@ from Clean_Fun import *
 
 # NOTE have to use remove_invalid_rows() inside ALex's function,
 # before we remove patient name
-impute_na=9999
 # %% Load dataset
 
 live_path='Data/Cardiac Program_M.xlsx'
@@ -17,12 +16,9 @@ archive_sheet_pkl='pickle_jar/archive_sheets.pkl'
 datecol_pkl='pickle_jar/datecols.pkl'
 df = sheet_merge(live_path, archive_path,
     live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
-
-
 # %% test patients, determing Response Value
 
 # NOTE have to remove invalid rows
-
 df = determine_outcome_train_test(df)
 train_df,test_df=train_test_split_sg(df)
 df=train_df.copy() # for now
