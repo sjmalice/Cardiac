@@ -50,18 +50,21 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
         print('Sheet name: "{}"'.format(sheet_name))
         print('Retained columns: {}\n'.format(list(live_df_dict[sheet_name].columns)))
     print('\n')
+
     # Repeat for archive sheets
     for sheet_name in archive_sheets:
         archive_df_dict[sheet_name].columns = [x.lower().strip() for x in archive_df_dict[sheet_name].columns]
         archive_df_dict[sheet_name] = archive_df_dict[sheet_name][list(map(str.lower, archive_sheet_dict[sheet_name]))]
         print('Sheet name: "{}"'.format(sheet_name))
         print('Retained columns: {}\n'.format(list(archive_df_dict[sheet_name].columns)))
+    print('\n')
 
     # Make sure all date columns have appropriate datetime format, otherwise change to NaT
     for sheet_name in list(datecol_dict.keys()):
         live_df_dict[sheet_name][datecol_dict[sheet_name]] = datetime_fixer(live_df_dict[sheet_name][datecol_dict[sheet_name]])
         archive_df_dict[sheet_name][datecol_dict[sheet_name]] = datetime_fixer(archive_df_dict[sheet_name][datecol_dict[sheet_name]])
         print('Date column "{}" in sheet "{}" has been converted to appropriate datatype\n'.format(datecol_dict[sheet_name], sheet_name))
+    print('\n')
 
     live_df_dict['patients']['date_of_birth'] = datetime_fixer(live_df_dict['patients']['date_of_birth'])
     print('Date column "date_of_birth" in sheet "patients" has been converted to appropriate datatype')
@@ -88,6 +91,7 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
             init_length = len(combined_df_dict[sheet_name])
             combined_df_dict[sheet_name] = choose_most_recent(combined_df_dict[sheet_name], datecol_dict[sheet_name])
             print('Reduced sheet "{}" from {} rows to {} rows by filtering most recent dates\n'.format(sheet_name, init_length, len(combined_df_dict[sheet_name])))
+    print('\n')
 
     # Merge patients sheet with patient_enrollment_records manually because patients does not have an enrollId column
     full_df = pd.merge(combined_df_dict['patients'], combined_df_dict['patient_enrollment_records'], on='patient_link', how='outer')
@@ -98,7 +102,7 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
             init_length = len(full_df)
             combined_df_dict[sheet_name].drop(columns='patient_link', inplace=True)
             full_df = pd.merge(full_df, combined_df_dict[sheet_name], on='enrollId', how='outer')
-            print('Merged sheet "{}" with the full dataframe and changed the row number by {}\n'.format(sheet_name, (len(full_df)-init_length)))
-
+            print('Merged sheet "{}" with the full dataframe and changed the row number by {}'.format(sheet_name, (len(full_df)-init_length)))
+    print('\n')
     print('DATA MERGE IS COMPLETE')
     return full_df

@@ -5,6 +5,7 @@ import numpy as np
 import re
 import datetime
 import xlrd
+import pickle
 
 def weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2):
     """
