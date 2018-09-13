@@ -47,8 +47,28 @@ def addEnrollId(df, date_col, rootDf):
     # add enrollID for each row in rootDf when patient_link match and date is
     # greater than enrollment_date. Earlier enrollment_date are checked first
     # and overwritten when later dates are checked after
+    unmatchedPatients = []
     for i in rootDf.index:
-        df.loc[(df.patient_link == rootDf.patient_link[i]) &\
-        (df[date_col] >= rootDf.enrollment_date[i]), "enrollId"]\
-        = rootDf.enrollId[i]
+        # find patient links and dates that match new enroll ids
+        mask = (df.patient_link == rootDf.patient_link[i]) &\
+        (df[date_col] - rootDf.enrollment_date[i] >= -pd.Timedelta("7 days"))
+
+        unmatchedPatients.append(~mask.any())
+        df.loc[mask, "enrollId"] = rootDf.enrollId[i]
+    # print message if any enroll Ids were unmatched
+    if not any(unmatchedPatients):
+        print("No records found in the data frame that match these enroll IDs:")
+        print("="*40)
+        print(rootDf.enrollId[unmatchedPatients])
+    else:
+        print("Records for all patients found in the data frame. Yay!\n")
+    #print message if any rows in df are not assigned an enrollId
+    unmatchedRows = df.enrollId.isna()
+    if ~unmatchedRows.any():
+        print("All rows in data frame matched succesfully. Yay!\n")
+    else:
+        print("Failed to add enrollID to {} rows with indexes:"\
+        .format(unmatchedRows.sum()))
+        print("="*40)
+        print(df.index[unmatchedRows])
     return(df)
