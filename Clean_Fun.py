@@ -292,6 +292,14 @@ def dummify_diagnoses(df,unique_diag,diagnosis_col='diagnosis_1'):
 
     return dummy_diag
 
+def remove_paren(x):
+    """ removes everything after parentheses """
+    if re.search('\(',x):
+        end,_=re.search('\(',x).span()
+        return x[:end-1]
+    else:
+        return x
+
 def impute_from_special_status(status_row,special_row):
     """ If status is empy and special status is Death, put Death into status
     use like:  df.apply(lambda row: impute_from_special_status(row['status'],row['special_status']),axis=1)
