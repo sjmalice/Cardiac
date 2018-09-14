@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import re
 import datetime
+import datetime as dt
 import xlrd
 import pickle
 
@@ -41,6 +42,53 @@ def weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2):
     df['weight_change_since_admit'] = np.where(abs(df['weight_change_since_admit']/ \
         df['weight']) < weight_perc_cutoff, df['weight_change_since_admit'], df['weight_change_since_admit']/10)
 
+def find_duration(discharge, enroll_date, discharge_date):
+    """
+    duration (type float, expressed in days) is difference of discharge_date and
+    admission_date if discharge is true, otherwise duration is time since admission_dateself.
+    Non mutating Function
+    Author: Aungshuman
+    Use like: df['duration']=df.apply(lambda row: find_duration(row['discharge'],
+        row['enrollment_date'],row['discharge_date']),axis=1)
+    """
+    #pass
+    today = datetime.datetime.today()
+    if discharge : #True
+        return (discharge_date - enroll_date).days
+    else:
+        return (today - enroll_date).days
+
+def find_age(row):
+    """
+    age (type float, expressed in years) is deduced from birth date
+    Non mutating Function
+    Author: Aungshuman
+    Use as df['age'] = df['date_of_birth'].apply(find_age)
+    """
+    #pass
+    today = datetime.datetime.today()
+    try:
+        x = round((today - row).days/365)
+    except ValueError:
+        x = np.nan
+    return x
+
+def clean_weight_change(weight, weight_change):
+    """
+    If abs(weight_change)/ weight > 0.2:
+    weight_change (float, expressed in pounds) is recursively divided by 10 until abs(weight_change)/ weight < 0.2
+    Non Mutating Function
+    Author: Aungshuman
+    Use like df['weight_change_since_admit'] = df.apply(lambda row: clean_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
+    """
+    pass
+    if abs(weight_change)/weight < 0.2:
+        return weight_change
+    else:
+        while abs(weight_change)/weight > 0.2:
+            weight_change /= 10
+        return weight_change
+
 def med_aicd_clean(df, var, impute):
     """ Mutating Function
     Use as: med_aicd_clean(df,'ace', 0) for all medicines
@@ -49,25 +97,23 @@ def med_aicd_clean(df, var, impute):
     df[var]=df[var].str.lower()
 
     #fill missing w/impute value
+    print('num missing', df[var].isna().sum())
     df[var]=df[var].fillna(impute)
+    print('value counts before zero and one assignment:', df[var].value_counts())
 
     #set all values that indicate absence of value to zero
     none_values=list(set(df.loc[df[var].str.contains('none', na=False)][var].tolist()))
+    no_values=list(set(df.loc[df[var].apply(lambda x: search_for_nos(x)) & ~df[var].str.contains('if no relief',  na=False)][var].tolist()))
     allergy_values=list(set(df.loc[df[var].str.contains('allergic', na=False)][var].tolist()))
-    zero_values=none_values+allergy_values
+    zero_values=none_values+allergy_values+no_values
+    print('zero values:', zero_values)
     df.loc[df[var].isin(zero_values),var]=0
     df.loc[df[var].isin(['0']), var]=0
-
-    #Variables AICD and Acute_or_chronic
-    if var=='aicd':
-        df=df.replace({'aicd':{'no':0, 'no aicd or pacemaker':0, '0' : 0,'0.25':0, '25%':0, 'o':0, '9/13/2017' : 0, 'lisinopril':0}})
-    if var=='acute_or_chronic':
-        df=df.replace({'acute_or_chronic':{'acute':0, 'chronic':1}})
+    df.loc[df[var].isin(['acute']), var]=0
 
     #set all other values to 1
     allowed_vals=[0, impute]
-    print("Values set to 1.0: \n")
-    print(df.loc[~df[var].isin(allowed_vals), var].tolist())
+    print("Values set to 1.0: \n", list(set(df.loc[~df[var].isin(allowed_vals), var].tolist())))
     df.loc[~df[var].isin(allowed_vals), var] = 1
 
     df[var]=df[var].astype(float)
@@ -75,6 +121,15 @@ def med_aicd_clean(df, var, impute):
     print(df[var].value_counts())
 
     # return df
+
+def search_for_nos(x):
+    """ Searches for 'no' in the input variable
+    Use as df.loc[df[var].apply(lambda x: search_for_nos(x))]
+    """
+    try:
+        return re.search(r'\bno\b',x.lower())!= None
+    except:
+        return False
 
 def remove_cardiac_unrelated(df):
     """ Remove rows that are not cardiac related
@@ -166,7 +221,10 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
     x=str(x).replace('<','')
     x=str(x).replace('>','')
     try:
-        if float(x)<1:
+        if float(x)<0.10:
+            print('EF less than 0 set to None')
+            return None
+        elif float(x)<1:
             return float(x)
         elif float(x)>10:
             return float(x)/100
@@ -185,6 +243,33 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
                 return norm_val
             else: # deep clean extracts digits from string text
                 return ef_deep_clean(x)
+
+def hand_dates(x):
+    """
+    takes rows that were accidentally loaded into Excel datetime, which
+    is coded by a serial number, so you can code it back to that serial number
+    use as: df['resting_hr']=df.resting_hr.apply(lambda x: hand_dates(x))
+    """
+    try:
+        return float(x)
+    except:
+        try:
+            date_pd=pd.to_datetime(x)
+            return(excel_date(date_pd))
+        except:
+            print("Cannot parse heart rate: \n")
+            print(x)
+
+def excel_date(date1):
+    """
+    helper function to hand_dates
+    takes rows that were accidentally loaded into Excel datetime, which
+    is coded by a serial number, so you can code it back to that serial number
+    """
+    temp = dt.datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
+    delta = date1 - temp
+    return float(delta.days) + (float(delta.seconds) / 86400)
+
 
 def clean_diastolic_columns(di_sys,bp,col_type):
     """ Imputes diastolic or systolic from the BP columns
@@ -291,6 +376,14 @@ def dummify_diagnoses(df,unique_diag,diagnosis_col='diagnosis_1'):
         dummy_diag = pd.concat([dummy_diag,tmp_dummy_diag], axis=0)
 
     return dummy_diag
+
+def remove_paren(x):
+    """ removes everything after parentheses """
+    if re.search('\(',x):
+        end,_=re.search('\(',x).span()
+        return x[:end-1]
+    else:
+        return x
 
 def impute_from_special_status(status_row,special_row):
     """ If status is empy and special status is Death, put Death into status
