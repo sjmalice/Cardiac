@@ -98,59 +98,38 @@ def remove_cardiac_unrelated(df):
     print('New size of dataset: '+str(df.shape))
     # return df
 
-def determine_outcome_train_test(df,outcome_dict={
-    'Good':['To Home','No Reason Given','Assissted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
+def determine_outcome(status,discharge,discharge_date,outcome_dict={
+    'Good':['To Home','Assissted Living Facility','Assisted Living Facility','No Reason Given'], # CAN WE ASSUME THIS??? that In Nursing Facility
     'Bad':['Hospital','Death'],
     'Test':['In Nursing Facility','Skilled Nursing Facility (SNF)',
-    'Not approriate for program, removed']}):
-    """ Input dataframe and Outcome dictionary
-    Adds Train and Outcome columns to dataframe
-    Mutating function
+    'Not approriate for program, removed','Not approriate for program, removed']}):
     """
-    #first do quick imputations to status
-    df.status=df.apply(lambda row: impute_from_special_status(
-        row['status'],row['special_status']),axis=1)
-
-    outcome={}
-    train={}
-    for row in range(df.shape[0]):
-        if df.iloc[row]['status'] in outcome_dict['Good']:
-            outcome[df.iloc[row]['enrollId']]=1
-            train[df.iloc[row]['enrollId']]=1
-        if df.iloc[row]['status'] in outcome_dict['Bad']:
-            outcome[df.iloc[row]['enrollId']]=0
-            train[df.iloc[row]['enrollId']]=1
-        if df.iloc[row]['status'] in outcome_dict['Test']:
-            train[df.iloc[row]['enrollId']]=0
-        elif df.iloc[row]['discharge']==True:
-            train[df.iloc[row]['enrollId']]=1
-        elif df.iloc[row]['discharge']==False:
-            train[df.iloc[row]['enrollId']]=0
-    df['outcome']=df['enrollId'].map(outcome)
-    df['train']=df['enrollId'].map(train)
-    print("Successfully added two columns, Train, and Outcome")
-    return df
+    use as: df['outcome']=df.apply(lambda row: determine_outcome(row['status'],row['discharge'],row['discharge_date']),axis=1)
+    Takes a dictionary of statuses and divides into Postive, Negative and unknown outcomes (Test set)
+    """
+    if status in outcome_dict['Good']:
+        return 1
+    elif status in outcome_dict['Bad']:
+        return 0
+    elif status in outcome_dict['Test']:
+        return None
+    # discharged but outcome unknown
+    elif discharge==True:
+        print("Setting outcome to 2 for patients that have been discharged but we don't have a status on them")
+        return 2
+    elif discharge==False:
+        return None
 
 def train_test_split_sg(df):
     """
     returns two datasets, train and test
-
-    if you haven't already run determine_outcome_train_test(df), will call it first
     """
-    # try:
-    lost_df=df.loc[df.train.isnull()][['enrollId','patient_link','date_of_birth','facilities_link','special_status','enrollment_date','discharge_date','status']]
-    print('{} patients dropped due to unknown outcome: \n'.format(lost_df.shape[0]))
-    print(lost_df.shape[0])
-
-    train_ind=df.loc[df.train==1].index
-    train_df=df.iloc[train_ind].drop('train',axis=1)
+    train_ind=df.loc[df.outcome.isnull()!=True].index
+    train_df=df.iloc[train_ind]
     train_df=train_df.reset_index().drop('index',axis=1)
-    test_ind=df.loc[df.train==0].index
-    test_df=df.iloc[test_ind].drop('train',axis=1).reset_index().drop('index',axis=1)
+    test_ind=df.loc[df.outcome.isnull()].index
+    test_df=df.iloc[test_ind].reset_index().drop('index',axis=1)
     return train_df, test_df
-    # except:
-        # print("Calculating outcome first with determine_outcome_train_test()\n")
-        # return train_test_split_sg(determine_outcome_train_test(df))
 
 def ef_deep_clean(x):
     """ helper function to clean_EF_rows
@@ -228,22 +207,37 @@ def clean_diastolic_columns(di_sys,bp,col_type):
         pass
 
 def choose_most_recent(df,date_col):
-    ''' Choose the most recent lab/test result from list of results
-    To Do: make the drop duplicates more robust since misses some patients
+    ''' Choose the lab/test result from list of results with least missing values,
+        then with most recent date.
+
+        Keyword Arguments
+        =================
+        df -- Pandas DataFrame to choose rows from
+        date_col -- Date column in the dataframe to inspect
+
+        Returns
+        =======
+        Pandas DataFrame with a single row for each unique enrollId, should have least
+        missing values and, of those, most recent date
     '''
     new_df = pd.DataFrame(columns=df.columns)
     for pat in df.enrollId.unique():
         pat_df = df.loc[df.enrollId==pat]
-        rows,col = pat_df.shape
-        if rows == 1:
+        # Sum up the missing values in each row and filter the dataframe by rows with least missing
+        pat_df = pat_df[pat_df.isna().sum(axis=1)==pat_df.isna().sum(axis=1).min()]
+        rows = pat_df.shape[0]
+        # Find max dates and return first if more than one exists
+        if rows > 1:
+            tmp_df = pat_df.loc[pat_df[date_col]==pat_df[date_col].max()].head(1)
+        # If only one row, store that row
+        elif rows == 1:
             tmp_df = pat_df
+        # If for some reason there are no rows, print a message
         else:
-            try:
-                tmp_df = pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
-            except:
-                continue
+            print('Could not find a least missing/most recent row for enrollId: {}'.format(pat))
+            continue
         new_df = pd.concat([new_df, tmp_df], axis=0)
-    return new_df.drop_duplicates()
+    return new_df
 
 def lower_errors(x):
     try:
@@ -441,3 +435,24 @@ def write_pkl(my_obj, output_path):
     with open(output_path, 'wb') as f:
         pickle.dump(my_obj, f)
     print('Object saved to path "{}"'.format(output_path))
+
+def drop_date_cols(df):
+    """Drops date columns (except Date of Birth) from a dataframe
+
+    Keyword Arguments
+    =================
+    df -- Pandas DataFrame with date columns to drop
+
+    Returns
+    =======
+    Pandas DataFrame with no date columns (except Date of Birth)
+    """
+    datecols = []
+
+    for col in df.columns:
+        if df[col].dtype == 'datetime64[ns]' and col != 'date_of_birth':
+            datecols.append(col)
+    if len(datecols) > 0:
+        return df.drop(columns=datecols)
+    else:
+        print('No date columns were found to drop, make sure date columns contain type "datetype64[ns]"')

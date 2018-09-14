@@ -17,9 +17,9 @@ datecol_pkl='pickle_jar/datecols.pkl'
 df = sheet_merge(live_path, archive_path,
     live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
 # %% test patients, determing Response Value
-
+df
 # NOTE have to remove invalid rows
-df = determine_outcome_train_test(df)
+df['outcome']=df.apply(lambda row: determine_outcome(row['status'],row['discharge'],row['discharge_date']),axis=1)
 train_df,test_df=train_test_split_sg(df)
 df=train_df.copy() # for now
 del test_df
@@ -29,7 +29,6 @@ del test_df
 df['ef']=df['ef'].apply(lambda x: clean_EF_rows(x))
 
 # Clean Blood Pressure rows
-
 df['diastolic']=df.apply(lambda row: clean_diastolic_columns(
     row['diastolic'],row['resting_bp'],col_type='di'),axis=1)
 df['systolic']=df.apply(lambda row: clean_diastolic_columns(
@@ -41,9 +40,11 @@ dummy_df_diag=dummify_diagnoses(df,uniq_diag,diagnosis_col='diagnosis_1')
 df.drop('diagnosis_1',axis=1,inplace=True)
 df=df.merge(dummy_df_diag,on='enrollId',how="inner")
 
+df.columns
+
+
 # Clean Meds and aicd
 # acute or chronic
-
 med_aicd_clean(df,'ace', 0)
 med_aicd_clean(df,'bb', 0)
 med_aicd_clean(df,'diuretics', 0)
@@ -51,12 +52,16 @@ med_aicd_clean(df,'anticoagulant', 0)
 med_aicd_clean(df,'ionotropes', 0)
 med_aicd_clean(df,'aicd', 0)
 
-weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2)
+weight_dur_age_clean(df,dur_na=9999,age_na=9999,weight_perc_cutoff=0.2)
 remove_invalid_rows(df)
+
+df[df['duration']==9999]['duration']=None
+df[df['age']=9999]['age']=None
 
 # %%
 pd.set_option('display.max_columns', 60)
 df.drop_duplicates(inplace=True)
-df.reset_index(inplace=True)
-df.drop(columns=['index'], inplace=True)
+df.reset_index(inplace=True, drop=True)
+df.columns = [x.replace(" ", "_") for x in df.columns]
+df = drop_date_cols(df)
 df
