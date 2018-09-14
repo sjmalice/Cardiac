@@ -51,7 +51,7 @@ def addEnrollId(df, date_col, rootDf):
     for i in rootDf.index:
         # find patient links and dates that match new enroll ids
         mask = (df.patient_link == rootDf.patient_link[i]) &\
-        (df[date_col] - rootDf.enrollment_date[i] >= -pd.Timedelta("7 days"))
+        (df[date_col] - rootDf.enrollment_date[i] >= -pd.Timedelta("13 days"))
 
         unmatchedPatients.append(~mask.any())
         df.loc[mask, "enrollId"] = rootDf.enrollId[i]
