@@ -234,16 +234,18 @@ def choose_most_recent(df,date_col):
     new_df = pd.DataFrame(columns=df.columns)
     for pat in df.enrollId.unique():
         pat_df = df.loc[df.enrollId==pat]
-        rows,col = pat_df.shape
-        if rows == 1:
+        pat_df = pat_df[pat_df.isna().sum(axis=1)==pat_df.isna().sum(axis=1).min()]
+        rows = pat_df.shape[0]
+        if rows > 1:
+            tmp_df = pat_df.loc[pat_df[date_col]==pat_df[date_col].max()]
+            tmp_df = tmp_df.sort_values(date_col, ascending=False).head(1)
+        elif rows == 1:
             tmp_df = pat_df
         else:
-            try:
-                tmp_df = pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
-            except:
-                continue
+            print('No rows for enrollId: {}'.format(pat))
+            continue
         new_df = pd.concat([new_df, tmp_df], axis=0)
-    return new_df.drop_duplicates()
+    return new_df
 
 def lower_errors(x):
     try:
@@ -441,3 +443,24 @@ def write_pkl(my_obj, output_path):
     with open(output_path, 'wb') as f:
         pickle.dump(my_obj, f)
     print('Object saved to path "{}"'.format(output_path))
+
+def drop_date_cols(df):
+    """Drops date columns (except Date of Birth) from a dataframe
+
+    Keyword Arguments
+    =================
+    df -- Pandas DataFrame with date columns to drop
+
+    Returns
+    =======
+    Pandas DataFrame with no date columns (except Date of Birth)
+    """
+    datecols = []
+
+    for col in df.columns:
+        if df[col].dtype == 'datetime64[ns]' and col != 'date_of_birth':
+            datecols.append(col)
+    if len(datecols) > 0:
+        return df.drop(columns=datecols)
+    else:
+        print('No date columns were found to drop')
