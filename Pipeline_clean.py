@@ -17,7 +17,7 @@ datecol_pkl='pickle_jar/datecols.pkl'
 df = sheet_merge(live_path, archive_path,
     live_sheet_pkl, archive_sheet_pkl, datecol_pkl)
 # %% test patients, determing Response Value
-
+df
 # NOTE have to remove invalid rows
 df = determine_outcome_train_test(df)
 train_df,test_df=train_test_split_sg(df)
@@ -57,6 +57,7 @@ remove_invalid_rows(df)
 # %%
 pd.set_option('display.max_columns', 60)
 df.drop_duplicates(inplace=True)
-df.reset_index(inplace=True)
-df.drop(columns=['index'], inplace=True)
+df.reset_index(inplace=True, drop=True)
+df.columns = [x.replace(" ", "_") for x in df.columns]
+df = drop_date_cols(df)
 df

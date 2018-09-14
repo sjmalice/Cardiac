@@ -228,22 +228,37 @@ def clean_diastolic_columns(di_sys,bp,col_type):
         pass
 
 def choose_most_recent(df,date_col):
-    ''' Choose the most recent lab/test result from list of results
-    To Do: make the drop duplicates more robust since misses some patients
+    ''' Choose the lab/test result from list of results with least missing values,
+        then with most recent date.
+
+        Keyword Arguments
+        =================
+        df -- Pandas DataFrame to choose rows from
+        date_col -- Date column in the dataframe to inspect
+
+        Returns
+        =======
+        Pandas DataFrame with a single row for each unique enrollId, should have least
+        missing values and, of those, most recent date
     '''
     new_df = pd.DataFrame(columns=df.columns)
     for pat in df.enrollId.unique():
         pat_df = df.loc[df.enrollId==pat]
-        rows,col = pat_df.shape
-        if rows == 1:
+        # Sum up the missing values in each row and filter the dataframe by rows with least missing
+        pat_df = pat_df[pat_df.isna().sum(axis=1)==pat_df.isna().sum(axis=1).min()]
+        rows = pat_df.shape[0]
+        # Find max dates and return first if more than one exists
+        if rows > 1:
+            tmp_df = pat_df.loc[pat_df[date_col]==pat_df[date_col].max()].head(1)
+        # If only one row, store that row
+        elif rows == 1:
             tmp_df = pat_df
+        # If for some reason there are no rows, print a message
         else:
-            try:
-                tmp_df = pat_df.loc[pat_df[date_col]==max(pat_df[date_col])]
-            except:
-                continue
+            print('Could not find a least missing/most recent row for enrollId: {}'.format(pat))
+            continue
         new_df = pd.concat([new_df, tmp_df], axis=0)
-    return new_df.drop_duplicates()
+    return new_df
 
 def lower_errors(x):
     try:
@@ -441,3 +456,24 @@ def write_pkl(my_obj, output_path):
     with open(output_path, 'wb') as f:
         pickle.dump(my_obj, f)
     print('Object saved to path "{}"'.format(output_path))
+
+def drop_date_cols(df):
+    """Drops date columns (except Date of Birth) from a dataframe
+
+    Keyword Arguments
+    =================
+    df -- Pandas DataFrame with date columns to drop
+
+    Returns
+    =======
+    Pandas DataFrame with no date columns (except Date of Birth)
+    """
+    datecols = []
+
+    for col in df.columns:
+        if df[col].dtype == 'datetime64[ns]' and col != 'date_of_birth':
+            datecols.append(col)
+    if len(datecols) > 0:
+        return df.drop(columns=datecols)
+    else:
+        print('No date columns were found to drop, make sure date columns contain type "datetype64[ns]"')

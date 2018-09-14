@@ -87,7 +87,7 @@ def sheet_merge(live_path, archive_path, live_sheet_pkl_path, archive_sheet_pkl_
     # Add enrollID column to other sheets and filter most recent date per enrollId
     for sheet_name in archive_sheets:
         if sheet_name != 'patient_enrollment_records':
-            combined_df_dict[sheet_name] = addEnrollId(combined_df_dict[sheet_name], datecol_dict[sheet_name], combined_df_dict['patient_enrollment_records'])
+            combined_df_dict[sheet_name] = addEnrollId(combined_df_dict[sheet_name], datecol_dict[sheet_name], enrollId_df)
             print('Added "enrollID" column to sheet "{}"'.format(sheet_name))
             init_length = len(combined_df_dict[sheet_name])
             combined_df_dict[sheet_name] = choose_most_recent(combined_df_dict[sheet_name], datecol_dict[sheet_name])
