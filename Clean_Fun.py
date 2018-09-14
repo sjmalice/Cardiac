@@ -41,6 +41,53 @@ def weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2):
     df['weight_change_since_admit'] = np.where(abs(df['weight_change_since_admit']/ \
         df['weight']) < weight_perc_cutoff, df['weight_change_since_admit'], df['weight_change_since_admit']/10)
 
+def find_duration(discharge, enroll_date, discharge_date):
+    """
+    duration (type float, expressed in days) is difference of discharge_date and
+    admission_date if discharge is true, otherwise duration is time since admission_dateself.
+    Non mutating Function
+    Author: Aungshuman
+    Use like: df['duration']=df.apply(lambda row: find_duration(row['discharge'],
+        row['enrollment_date'],row['discharge_date']),axis=1)
+    """
+    #pass
+    today = datetime.datetime.today()
+    if discharge : #True
+        return (discharge_date - enroll_date).days
+    else:
+        return (today - enroll_date).days
+
+def find_age(row):
+    """
+    age (type float, expressed in years) is deduced from birth date
+    Non mutating Function
+    Author: Aungshuman
+    Use as df['age'] = df['date_of_birth'].apply(find_age)
+    """
+    #pass
+    today = datetime.datetime.today()
+    try:
+        x = round((today - row).days/365)
+    except ValueError:
+        x = np.nan
+    return x
+
+def clean_weight_change(weight, weight_change):
+    """
+    If abs(weight_change)/ weight > 0.2:
+    weight_change (float, expressed in pounds) is recursively divided by 10 until abs(weight_change)/ weight < 0.2
+    Non Mutating Function
+    Author: Aungshuman
+    Use like df['weight_change_since_admit'] = df.apply(lambda row: clean_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
+    """
+    pass
+    if abs(weight_change)/weight < 0.2:
+        return weight_change
+    else:
+        while abs(weight_change)/weight > 0.2:
+            weight_change /= 10
+        return weight_change
+
 def med_aicd_clean(df, var, impute):
     """ Mutating Function
     Use as: med_aicd_clean(df,'ace', 0) for all medicines
