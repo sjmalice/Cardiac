@@ -221,7 +221,10 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
     x=str(x).replace('<','')
     x=str(x).replace('>','')
     try:
-        if float(x)<1:
+        if float(x)<0.10:
+            print('EF less than 0 set to None')
+            return None
+        elif float(x)<1:
             return float(x)
         elif float(x)>10:
             return float(x)/100
