@@ -87,7 +87,7 @@ def clean_weight_change(weight, weight_change):
         while abs(weight_change)/weight > 0.2:
             weight_change /= 10
         return weight_change
-
+        
 def med_aicd_clean(df, var, impute):
     """ Mutating Function
     Use as: med_aicd_clean(df,'ace', 0) for all medicines
