@@ -52,8 +52,11 @@ med_aicd_clean(df,'anticoagulant', 0)
 med_aicd_clean(df,'ionotropes', 0)
 med_aicd_clean(df,'aicd', 0)
 
-weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2)
+weight_dur_age_clean(df,dur_na=9999,age_na=9999,weight_perc_cutoff=0.2)
 remove_invalid_rows(df)
+
+df[df['duration']==9999]['duration']=None
+df[df['age']=9999]['age']=None
 
 # %%
 pd.set_option('display.max_columns', 60)
