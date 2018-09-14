@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import re
 import datetime
+import datetime as dt
 import xlrd
 import pickle
 
@@ -87,7 +88,7 @@ def clean_weight_change(weight, weight_change):
         while abs(weight_change)/weight > 0.2:
             weight_change /= 10
         return weight_change
-        
+
 def med_aicd_clean(df, var, impute):
     """ Mutating Function
     Use as: med_aicd_clean(df,'ace', 0) for all medicines
@@ -239,6 +240,33 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
                 return norm_val
             else: # deep clean extracts digits from string text
                 return ef_deep_clean(x)
+
+def hand_dates(x):
+    """
+    takes rows that were accidentally loaded into Excel datetime, which
+    is coded by a serial number, so you can code it back to that serial number
+    use as: df['resting_hr']=df.resting_hr.apply(lambda x: hand_dates(x))
+    """
+    try:
+        return float(x)
+    except:
+        try:
+            date_pd=pd.to_datetime(x)
+            return(excel_date(date_pd))
+        except:
+            print("Cannot parse heart rate: \n")
+            print(x)
+
+def excel_date(date1):
+    """
+    helper function to hand_dates
+    takes rows that were accidentally loaded into Excel datetime, which
+    is coded by a serial number, so you can code it back to that serial number
+    """
+    temp = dt.datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
+    delta = date1 - temp
+    return float(delta.days) + (float(delta.seconds) / 86400)
+
 
 def clean_diastolic_columns(di_sys,bp,col_type):
     """ Imputes diastolic or systolic from the BP columns
