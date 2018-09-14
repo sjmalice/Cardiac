@@ -40,9 +40,6 @@ dummy_df_diag=dummify_diagnoses(df,uniq_diag,diagnosis_col='diagnosis_1')
 df.drop('diagnosis_1',axis=1,inplace=True)
 df=df.merge(dummy_df_diag,on='enrollId',how="inner")
 
-df.columns
-
-
 # Clean Meds and aicd
 # acute or chronic
 med_aicd_clean(df,'ace', 0)
@@ -55,8 +52,8 @@ med_aicd_clean(df,'aicd', 0)
 weight_dur_age_clean(df,dur_na=9999,age_na=9999,weight_perc_cutoff=0.2)
 remove_invalid_rows(df)
 
-df[df['duration']==9999]['duration']=None
-df[df['age']=9999]['age']=None
+df.loc[df['duration']==9999, 'duration'] = None
+df.loc[df['age']==9999, 'age'] = None
 
 # %%
 pd.set_option('display.max_columns', 60)
