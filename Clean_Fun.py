@@ -228,21 +228,34 @@ def clean_diastolic_columns(di_sys,bp,col_type):
         pass
 
 def choose_most_recent(df,date_col):
-    ''' Choose the most recent lab/test result from list of results
-    To Do: make the drop duplicates more robust since misses some patients
+    ''' Choose the lab/test result from list of results with least missing values,
+        then with most recent date.
+
+        Keyword Arguments
+        =================
+        df -- Pandas DataFrame to choose rows from
+        date_col -- Date column in the dataframe to inspect
+
+        Returns
+        =======
+        Pandas DataFrame with a single row for each unique enrollId, should have least
+        missing values and, of those, most recent date
     '''
     new_df = pd.DataFrame(columns=df.columns)
     for pat in df.enrollId.unique():
         pat_df = df.loc[df.enrollId==pat]
+        # Sum up the missing values in each row and filter the dataframe by rows with least missing
         pat_df = pat_df[pat_df.isna().sum(axis=1)==pat_df.isna().sum(axis=1).min()]
         rows = pat_df.shape[0]
+        # Find max dates and return first if more than one exists
         if rows > 1:
-            tmp_df = pat_df.loc[pat_df[date_col]==pat_df[date_col].max()]
-            tmp_df = tmp_df.sort_values(date_col, ascending=False).head(1)
+            tmp_df = pat_df.loc[pat_df[date_col]==pat_df[date_col].max()].head(1)
+        # If only one row, store that row
         elif rows == 1:
             tmp_df = pat_df
+        # If for some reason there are no rows, print a message
         else:
-            print('No rows for enrollId: {}'.format(pat))
+            print('Could not find a least missing/most recent row for enrollId: {}'.format(pat))
             continue
         new_df = pd.concat([new_df, tmp_df], axis=0)
     return new_df
@@ -463,4 +476,4 @@ def drop_date_cols(df):
     if len(datecols) > 0:
         return df.drop(columns=datecols)
     else:
-        print('No date columns were found to drop')
+        print('No date columns were found to drop, make sure date columns contain type "datetype64[ns]"')
