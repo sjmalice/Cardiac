@@ -49,25 +49,23 @@ def med_aicd_clean(df, var, impute):
     df[var]=df[var].str.lower()
 
     #fill missing w/impute value
+    print('num missing', df[var].isna().sum())
     df[var]=df[var].fillna(impute)
+    print('value counts before zero and one assignment:', df[var].value_counts())
 
     #set all values that indicate absence of value to zero
     none_values=list(set(df.loc[df[var].str.contains('none', na=False)][var].tolist()))
+    no_values=list(set(df.loc[df[var].apply(lambda x: search_for_nos(x)) & ~df[var].str.contains('if no relief',  na=False)][var].tolist()))
     allergy_values=list(set(df.loc[df[var].str.contains('allergic', na=False)][var].tolist()))
-    zero_values=none_values+allergy_values
+    zero_values=none_values+allergy_values+no_values
+    print('zero values:', zero_values)
     df.loc[df[var].isin(zero_values),var]=0
     df.loc[df[var].isin(['0']), var]=0
-
-    #Variables AICD and Acute_or_chronic
-    if var=='aicd':
-        df=df.replace({'aicd':{'no':0, 'no aicd or pacemaker':0, '0' : 0,'0.25':0, '25%':0, 'o':0, '9/13/2017' : 0, 'lisinopril':0}})
-    if var=='acute_or_chronic':
-        df=df.replace({'acute_or_chronic':{'acute':0, 'chronic':1}})
+    df.loc[df[var].isin(['acute']), var]=0
 
     #set all other values to 1
     allowed_vals=[0, impute]
-    print("Values set to 1.0: \n")
-    print(df.loc[~df[var].isin(allowed_vals), var].tolist())
+    print("Values set to 1.0: \n", list(set(df.loc[~df[var].isin(allowed_vals), var].tolist())))
     df.loc[~df[var].isin(allowed_vals), var] = 1
 
     df[var]=df[var].astype(float)
@@ -75,6 +73,15 @@ def med_aicd_clean(df, var, impute):
     print(df[var].value_counts())
 
     # return df
+
+def search_for_nos(x):
+    """ Searches for 'no' in the input variable
+    Use as df.loc[df[var].apply(lambda x: search_for_nos(x))]
+    """
+    try:
+        return re.search(r'\bno\b',x.lower())!= None
+    except:
+        return False
 
 def remove_cardiac_unrelated(df):
     """ Remove rows that are not cardiac related
