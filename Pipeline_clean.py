@@ -38,6 +38,7 @@ df['systolic']=df.apply(lambda row: clean_diastolic_columns(
 uniq_diag=find_unique_diag(df.diagnosis_1)
 dummy_df_diag=dummify_diagnoses(df,uniq_diag,diagnosis_col='diagnosis_1')
 df.drop('diagnosis_1',axis=1,inplace=True)
+dummy_df_diag.columns=pd.Series(uniq_diag).apply(lambda x: remove_paren(x)).append(pd.Series('enrollId'))
 df=df.merge(dummy_df_diag,on='enrollId',how="inner")
 
 # Clean Meds and aicd
