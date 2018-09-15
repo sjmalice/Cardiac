@@ -89,6 +89,36 @@ def clean_weight_change(weight, weight_change):
             weight_change /= 10
         return weight_change
 
+def clean_gender(x):
+    """
+    Cleans Gender, waiting on Shani for imputing gender based on Patient First Name
+    use with apply(lambda)
+    """
+    if x =="Male":
+        return 1
+    if x=="Female":
+        return 0
+    else:
+        return x
+
+def impute_acute_chronic(x,duration):
+    """
+    Returns 1 or 0 for Acute/Chronic, calculates based on duration if empty.
+    use as df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
+    """
+    if x=="Acute":
+        x=1
+    elif x =="Chronic":
+        x=0
+
+    if (np.isnan(x)) & (np.isnan(duration)==False):
+        if duration >=30:
+            return 0
+        elif duration <30:
+            return 1
+    else:
+        return x
+
 def med_aicd_clean(df, var, impute):
     """ Mutating Function
     Use as: med_aicd_clean(df,'ace', 0) for all medicines
