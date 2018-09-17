@@ -7,6 +7,7 @@ import datetime
 import datetime as dt
 import xlrd
 import pickle
+from sklearn import preprocessing
 
 def weight_dur_age_clean(df,dur_na=-999999,age_na=-99.,weight_perc_cutoff=0.2):
     """
@@ -107,12 +108,39 @@ def get_frac_weight_change(weight, weight_change, threshold=0.25):
 
 def clean_labs(x):
     """
-    Use as df['bun'] = df['bun'].apply(clean_labs)
+    Author: Aungshuman
+    Use like df['bun'] = df['bun'].apply(clean_labs)
     """
     if x == 0.:
         return np.nan
     else:
         return x
+
+def get_standardized_cloumns(df):
+    """
+    It takes a df, and standardizes continuous variables (Warning: HARD CODED)
+    Non mutating function
+    Author: Aungshuman
+    Use like df_with_std = get_standardized_cloumns(df_before_std)
+    """
+    standardize_cols = ['ef', 'admit_weight',  'weight',
+        'this_weight_change', 'weight_change_since_admit', 'bnp',
+        'this_bnp_change', 'bun', 'cr', 'potasium',
+        'this_cr_change', 'resting_hr', 'systolic', 'diastolic',
+        'duration', 'age']
+    df_numeric_continuous = df[standardize_cols]
+    all_cols = df.columns
+    non_cont_cols  = [x for x in all_cols if x not in standardize_cols]
+    x = df_numeric_continuous.values
+    std_scaler = preprocessing.StandardScaler()
+    x_scaled = std_scaler.fit_transform(x)
+
+    numeric_cont_columns = df_numeric_continuous.columns #Saving column information
+    df_numeric_continuous = pd.DataFrame(x_scaled)
+    df_numeric_continuous.columns = numeric_cont_columns
+    df_numeric_continuous.index = df.index #Using index information from df. #This is IMPORTANT for concatanation later
+    df_withstd = pd.concat([df[non_cont_cols],df_numeric_continuous], axis =1)
+    return df_withstd
 
 def clean_gender(x):
     """
