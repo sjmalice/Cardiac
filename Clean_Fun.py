@@ -281,6 +281,8 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
             return float(x)
         elif float(x)>10:
             return float(x)/100
+        elif float(x)>100:
+            return np.nan
     except:
         # For the percentages like 55%:
         x=str(x).replace('%','')
