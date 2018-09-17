@@ -116,12 +116,12 @@ def clean_labs(x):
     else:
         return x
 
-def get_standardized_cloumns(df):
+def get_standardized_columns(df):
     """
     It takes a df, and standardizes continuous variables (Warning: HARD CODED)
     Non mutating function
     Author: Aungshuman
-    Use like df_with_std = get_standardized_cloumns(df_before_std)
+    Use like df_with_std = get_standardized_columns(df_before_std)
     """
     standardize_cols = ['ef', 'admit_weight',  'weight',
         'this_weight_change', 'weight_change_since_admit', 'bnp',
