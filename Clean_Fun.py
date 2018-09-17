@@ -73,7 +73,7 @@ def find_age(row):
         x = np.nan
     return x
 
-def clean_weight_change(weight, weight_change):
+def clean_weight_change(weight, weight_change, threshold=0.2):
     """
     If abs(weight_change)/ weight > 0.2:
     weight_change (float, expressed in pounds) is recursively divided by 10 until abs(weight_change)/ weight < 0.2
@@ -81,13 +81,30 @@ def clean_weight_change(weight, weight_change):
     Author: Aungshuman
     Use like df['weight_change_since_admit'] = df.apply(lambda row: clean_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
     """
-    pass
-    if abs(weight_change)/weight < 0.2:
+    #pass
+    if abs(weight_change)/weight < threshold:
         return weight_change
     else:
-        while abs(weight_change)/weight > 0.2:
+        while abs(weight_change)/weight > threshold:
             weight_change /= 10
         return weight_change
+
+def get_frac_weight_change(weight, weight_change, threshold=0.2):
+    """
+    Similar to clean_weight_change, but returns the fractional weight change (can be positive or negative)
+    If abs(weight_change)/ weight > 0.2:
+    weight_change (float, expressed in pounds) is recursively divided by 10 until abs(weight_change)/ weight < 0.2
+    Non Mutating Function
+    Author: Aungshuman
+    Use like df['weight_change_fraction'] = df.apply(lambda row: get_pct_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
+    """
+    #pass
+    if abs(weight_change)/weight < threshold:
+        return weight_change/weight
+    else:
+        while abs(weight_change)/weight > threshold:
+            weight_change /= 10
+        return weight_change/weight
 
 def clean_gender(x):
     """
@@ -310,9 +327,9 @@ def clean_diastolic_columns(di_sys,bp,col_type):
         if np.isnan(di_sys):
             sys_tmp,di_tmp=re.findall('\\b\\d+\\b', bp)
             if col_type=='di':
-                return di_tmp
+                return float(di_tmp)
             elif col_type=='sys':
-                return sys_tmp
+                return float(sys_tmp)
             else:
                 print("Error: please correct input variable col_type to be either 'di' or 'sys'")
         else:
