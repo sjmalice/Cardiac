@@ -84,9 +84,9 @@ def meta_clean(df):
     df['duration']=df.apply(lambda row: find_duration(row['discharge'],
         row['enrollment_date'],row['discharge_date']),axis=1)
     df['age'] = df['date_of_birth'].apply(find_age)
-    df['weight_change_since_admit'] = df.apply(lambda row: clean_weight_change(
+    df['weight_change_since_admit'] = df.apply(lambda row: get_frac_weight_change(
         row['weight'],row['weight_change_since_admit']),axis=1)
-    df['this_weight_change'] = df.apply(lambda row: clean_weight_change(
+    df['this_weight_change'] = df.apply(lambda row: get_frac_weight_change(
         row['weight'],row['this_weight_change']),axis=1)
 
     df['patient_gender']=df.patient_gender.apply(lambda x: clean_gender(x))
