@@ -71,7 +71,7 @@ def find_age(row):
         x = np.nan
     return x
 
-def clean_weight_change(weight, weight_change, threshold=0.2):
+def clean_weight_change(weight, weight_change, threshold=0.25):
     """
     If abs(weight_change)/ weight > 0.2:
     weight_change (float, expressed in pounds) is recursively divided by 10 until abs(weight_change)/ weight < 0.2
@@ -82,11 +82,12 @@ def clean_weight_change(weight, weight_change, threshold=0.2):
     if abs(weight_change)/weight < threshold:
         return weight_change
     else:
-        while abs(weight_change)/weight > threshold:
-            weight_change /= 10
-        return weight_change
+        #while abs(weight_change)/weight > threshold:
+        #    weight_change /= 10
+        #return weight_change
+        return np.nan
 
-def get_frac_weight_change(weight, weight_change, threshold=0.2):
+def get_frac_weight_change(weight, weight_change, threshold=0.25):
     """
     Similar to clean_weight_change, but returns the fractional weight change (can be positive or negative)
     If abs(weight_change)/ weight > 0.2:
@@ -98,10 +99,10 @@ def get_frac_weight_change(weight, weight_change, threshold=0.2):
     if abs(weight_change)/weight < threshold:
         return weight_change/weight
     else:
-        while abs(weight_change)/weight > threshold:
-            weight_change /= 10
-        return weight_change/weight
-
+        #while abs(weight_change)/weight > threshold:
+        #    weight_change /= 10
+        #return weight_change/weight
+        return np.nan
 
 def clean_labs(x):
     """
