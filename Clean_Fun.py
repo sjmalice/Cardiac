@@ -540,8 +540,12 @@ def datetime_fixer(date_list):
                     date_list[i] = datetime.strptime(date_list[i], '%m/%d/%Y')
                     # If error, replace with NaT
                 except:
-                    date_list[i] = np.datetime64('NaT')
-                    nats_added += 1
+                    try:
+                        date_list[i] = pd.to_datetime(date_list[i])
+                    	# If date was converted to NaT, take note
+                    except:
+                        date_list[i] = np.datetime64('NaT')
+                        nats_added += 1
             else:
                 date_list[i] = np.datetime64('NaT')
                 nats_added += 1
