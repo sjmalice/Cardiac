@@ -53,9 +53,10 @@ def find_duration(discharge, enroll_date, discharge_date):
     """
     today = datetime.datetime.today()
     if discharge : #True
-        return (discharge_date - enroll_date).days
+        x =  (discharge_date - enroll_date).days
     else:
-        return (today - enroll_date).days
+        x = (today - enroll_date).days
+    return x if x > 0. else np.nan
 
 def find_age(row, threshold = 0.):
     """
