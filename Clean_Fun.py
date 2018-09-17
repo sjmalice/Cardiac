@@ -51,7 +51,6 @@ def find_duration(discharge, enroll_date, discharge_date):
     Use like: df['duration']=df.apply(lambda row: find_duration(row['discharge'],
         row['enrollment_date'],row['discharge_date']),axis=1)
     """
-    #pass
     today = datetime.datetime.today()
     if discharge : #True
         return (discharge_date - enroll_date).days
@@ -65,7 +64,6 @@ def find_age(row):
     Author: Aungshuman
     Use as df['age'] = df['date_of_birth'].apply(find_age)
     """
-    #pass
     today = datetime.datetime.today()
     try:
         x = round((today - row).days/365)
@@ -81,7 +79,6 @@ def clean_weight_change(weight, weight_change, threshold=0.2):
     Author: Aungshuman
     Use like df['weight_change_since_admit'] = df.apply(lambda row: clean_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
     """
-    #pass
     if abs(weight_change)/weight < threshold:
         return weight_change
     else:
@@ -98,13 +95,22 @@ def get_frac_weight_change(weight, weight_change, threshold=0.2):
     Author: Aungshuman
     Use like df['weight_change_fraction'] = df.apply(lambda row: get_pct_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
     """
-    #pass
     if abs(weight_change)/weight < threshold:
         return weight_change/weight
     else:
         while abs(weight_change)/weight > threshold:
             weight_change /= 10
         return weight_change/weight
+
+
+def clean_labs(x):
+    """
+    Use as df['bun'] = df['bun'].apply(clean_labs)
+    """
+    if x == 0.:
+        return np.nan
+    else:
+        return x
 
 def clean_gender(x):
     """
