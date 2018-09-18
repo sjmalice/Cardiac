@@ -3,12 +3,16 @@ import numpy as np
 from Clean_Fun import *
 from Meta_fun import *
 import matplotlib.pyplot as plt
-
+%load_ext autoreload
+%autoreload 2
 # %% Load dataset
 df=pd.read_csv('Data/after_merge.csv',index_col=0)
 # %% test patients, determing Response Value
+pd.set_option('display.max_columns', 60)
 
 df=meta_clean(df)
+df[keep_cols].isnull().sum()
+
 df=df[df['outcome']!=2]
 # %%
 # load the columns I want to keep while modelling
@@ -17,12 +21,14 @@ column_dict=read_pkl('Models/model_columns.pkl')
 keep_cols=column_dict['keep_cols']
 pat_cols=column_dict['pat_cols']
 
-temporary_imputation(df)
+final_imputation(df)
 
+# we have 47 duration and 12 acute/chronic that we are currently dropping
+df[keep_cols].isnull().sum()
 
 ###### any transformations will go here ########
 log_cols=['ef','admit_weight', 'weight', 'bnp',
- 'bun', 'cr', 'potasium', 'age']
+ 'bun', 'cr', 'potasium']
 df[log_cols].isnull().sum()
 
 for col in log_cols:
@@ -56,10 +62,3 @@ cnf_matrix = confusion_matrix(y_test, prediction)
 cnf_matrix
 # write_pkl(para_search,'Models/log_regression_notrans.pkl')
 predictions=para_search.predict(test(df)[keep_cols].drop('outcome',axis=1).dropna())
-len(predictions)
-
-test(df)[keep_cols].drop('outcome',axis=1).dropna()
-
-response_df=test(df)[pat_cols].drop('outcome',axis=1).dropna()[['patient_link','enrollId']]
-response_df['predictions']=predictions
-write_pkl(response_df,'response_df.pkl')

@@ -16,6 +16,44 @@ def test(df):
     """
     return df[df['outcome'].isnull()]
 
+def final_imputation(df):
+    """
+    Imputation so that I can practice a model with the API
+    One thing to note is the use of train(df) to calculate the average or mode,
+    but acting on the entire dataset (including test)
+    Mutating Function
+    """
+    from scipy.stats import mode
+
+    df.patient_gender.fillna(mode(train(df).patient_gender).mode[0],inplace=True)
+    df.ef.fillna(np.nanmedian(train(df).ef),inplace=True)
+
+    # maybe drop weight:
+    # df.admit_weight.fillna(WEIGHT),inplace=True)
+
+    # impute weight_change_since_admit using admit_weight
+    df.weight_change_since_admit.fillna(np.nanmedian(train(df).weight_change_since_admit),inplace=True)
+    df.this_weight_change.fillna(np.nanmedian(train(df).this_weight_change),inplace=True)# fill with median
+
+    df.this_bnp_change.fillna(np.nanmedian(train(df).this_bnp_change),inplace=True)
+    df.bnp.fillna(np.nanmedian(train(df).bnp),inplace=True)
+
+    df.bun.fillna(np.nanmedian(train(df).bun),inplace=True)
+    df.cr.fillna(np.nanmedian(train(df).cr),inplace=True)
+
+    df.potasium.fillna(np.nanmedian(train(df).potasium),inplace=True)
+
+    df.this_cr_change.fillna(np.nanmedian(train(df).this_cr_change),inplace=True)
+    df.resting_hr.fillna(np.nanmedian(train(df).resting_hr),inplace=True)
+
+
+    df.diastolic.fillna(np.nanmedian(train(df).diastolic),inplace=True)
+    df.systolic.fillna(np.nanmedian(train(df).systolic),inplace=True)
+
+    df.age.fillna(np.mean(train(df).age),inplace=True)
+    print("Successfully imputed for all missing values")
+
+
 def temporary_imputation(df):
     """
     Very temporary imputation so that I can practice a model with the API
@@ -51,10 +89,10 @@ def meta_clean(df):
     df['ef']=df['ef'].apply(lambda x: clean_EF_rows(x))
 
     # Clean Blood Pressure rows
-    df['diastolic']=df.apply(lambda row: clean_diastolic_columns(
-        row['diastolic'],row['resting_bp'],col_type='di'),axis=1)
+    df['diastolic']=df.apply(lambda row: clean_diastolic_columns(row['diastolic'],
+                        row['resting_bp'],'di',row['systolic']),axis=1)
     df['systolic']=df.apply(lambda row: clean_diastolic_columns(
-        row['systolic'],row['resting_bp'],col_type='sys'),axis=1)
+        row['systolic'],row['resting_bp'],'sys',row['diastolic']),axis=1)
 
     # Dummify the diagnoses
     uniq_diag=find_unique_diag(df.diagnosis_1)
@@ -91,6 +129,11 @@ def meta_clean(df):
 
     df['patient_gender']=df.patient_gender.apply(lambda x: clean_gender(x))
     df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
+
+    # set any 0 lab results to None
+    labs=['bnp','cr','potasium','mg','sodium']
+    for lab in labs:
+        df[lab] = df[lab].apply(lambda x: clean_labs(x))
 
     remove_invalid_rows(df)
 
