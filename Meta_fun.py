@@ -135,7 +135,7 @@ def meta_clean(df):
     df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
 
     # set any 0 lab results to None
-    labs=['bnp','cr','potasium','mg','sodium']
+    labs=['bnp','cr',"bun",'potasium','mg','sodium']
     for lab in labs:
         df[lab] = df[lab].apply(lambda x: clean_labs(x))
 
