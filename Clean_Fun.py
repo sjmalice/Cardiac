@@ -356,25 +356,36 @@ def excel_date(date1):
     return float(delta.days) + (float(delta.seconds) / 86400)
 
 
-def clean_diastolic_columns(di_sys,bp,col_type):
+def clean_diastolic_columns(di_sys,bp,col_type,other_press):
     """ Imputes diastolic or systolic from the BP columns
     col_type distinguishes between di or sys
-    Use like: df.apply(lambda row: clean_diastolic_columns(row['Diastolic'],row['resting_BP'],col_type='di'),axis=1)
+    other_press is used to impute an estimated di or sys in the other exists
+    Use like: df.apply(lambda row: clean_diastolic_columns(row['Diastolic'],
+                        row['resting_BP'],col_type='di'),axis=1)
+    I chose 2.00 as ratio between systolic and diastolic based on result of:
+    np.mean(df.systolic.dropna()/df.diastolic.dropna())
     """
     try:
         if np.isnan(di_sys):
             sys_tmp,di_tmp=re.findall('\\b\\d+\\b', bp)
             if col_type=='di':
+                print("Imputing {},{} from Blood Pressure Column".format(sys_tmp,di_tmp))
                 return float(di_tmp)
             elif col_type=='sys':
+                print("Imputing {},{} from Blood Pressure Column".format(sys_tmp,di_tmp))
                 return float(sys_tmp)
             else:
                 print("Error: please correct input variable col_type to be either 'di' or 'sys'")
         else:
             return di_sys
-        print("Imputing {},{} from Blood Pressure Column".format(sys_tmp,di_tmp))
     except:
-        pass
+        if np.isnan(other_press)==False:
+            if col_type=='di':
+                print("Imputing {},{} from other column".format(other_press,str(float(other_press)*2.0)))
+                return float(other_press)*2.0
+            elif col_type=='sys':
+                print("Imputing {},{} from other column".format(other_press,str(float(other_press)/2.0)))
+                return float(other_press)/2.0
 
 def choose_most_recent(df,date_col):
     ''' Choose the lab/test result from list of results with least missing values,
