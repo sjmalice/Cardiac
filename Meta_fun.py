@@ -51,6 +51,7 @@ def final_imputation(df):
     df.systolic.fillna(np.nanmedian(train(df).systolic),inplace=True)
 
     df.age.fillna(np.mean(train(df).age),inplace=True)
+    df.duration.fillna(np.nanmedian(train(df).duration),inplace=True)
     print("Successfully imputed for all missing values")
 
 
