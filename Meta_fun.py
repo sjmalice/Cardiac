@@ -99,8 +99,9 @@ def meta_clean(df):
                         row['resting_bp'],'di',row['systolic']),axis=1)
     df['systolic']=df.apply(lambda row: clean_diastolic_columns(
         row['systolic'],row['resting_bp'],'sys',row['diastolic']),axis=1)
-    # remove systolic outlier
+    # remove bp outliers
     df.loc[df.systolic < 20, "systolic"] = np.nan
+    df.loc[df.diastolic < 20, "diastolic"] = np.nan
 
     # Dummify the diagnoses
     uniq_diag=find_unique_diag(df.diagnosis_1)
