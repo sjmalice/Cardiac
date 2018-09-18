@@ -93,6 +93,7 @@ def meta_clean(df):
     # Remove outliers
     df.loc[df.this_bnp_change < -5000, "this_bnp_change"] = np.nan
     df.loc[df.potasium > 20, "potasium"] = np.nan
+    df.loc[df.systolic < 20, "systolic"]
 
     # Clean Blood Pressure rows
     df['diastolic']=df.apply(lambda row: clean_diastolic_columns(row['diastolic'],
