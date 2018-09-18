@@ -3,4 +3,3 @@ pandas
 pickle
 gspread
 oauth2client
-gender-guesser
