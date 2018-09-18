@@ -87,6 +87,7 @@ def meta_clean(df):
     # %% Clean effusion rate
 
     df['ef']=df['ef'].apply(lambda x: clean_EF_rows(x))
+    df.ef[df.ef > 1] = np.nan
 
     # Clean Blood Pressure rows
     df['diastolic']=df.apply(lambda row: clean_diastolic_columns(row['diastolic'],
