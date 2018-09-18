@@ -11,7 +11,7 @@ def impute_gender(gender, name):
         to apply this use df.apply(lambda row: impute_gender(row['patient_gender'],row['name']),axis=1)
         This just imputes what the funciton does so you need another function to make all the genders say the same thing
 
-        This is mutating to the gender column
+        This is not mutating to the gender column (but you probably want it to be)
     """
     try:
         if (type(gender)==str and len(gender)==0) or (type(gender)==float and np.isnan(gender)):
@@ -31,7 +31,7 @@ def normalizing_gender(gender):
         funciton just normalizes everything
         Right now NaN's and unknown are being imputed as Male but this could be changed it desired
         Use this function with df.apply(lambda row: normalizing_gender(row['patient_gender']),axis=1)
-        This is mutating
+        This is not mutating (but you probably want it to be)
     """
     if (gender=='female') or (gender=='Female') or (gender=='mostly_female'):
         return 'Female'
