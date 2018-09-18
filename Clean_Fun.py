@@ -319,10 +319,10 @@ def clean_EF_rows(x,na_val=0.49,norm_val=0.55,list_strings=['pending','ordered',
             return None
         elif float(x)<1:
             return float(x)
-        elif float(x)>10:
-            return float(x)/100
         elif float(x)>100:
             return np.nan
+        elif float(x)>10:
+            return float(x)/100
     except:
         # For the percentages like 55%:
         x=str(x).replace('%','')
@@ -585,23 +585,24 @@ def datetime_fixer(date_list):
                     date_list[i] = datetime.datetime(*xlrd.xldate_as_tuple(date_list[i], 0))
                 else:
                     date_list[i] = np.datetime64('NaT')
-                    nats_added += 1
             # If this date is a string
             elif isinstance(date_list[i], str):
                 # Try to convert to datetime using this format
                 try:
                     date_list[i] = datetime.strptime(date_list[i], '%m/%d/%Y')
-                    # If error, replace with NaT
+                # If error, try to_datetime method
                 except:
                     try:
                         date_list[i] = pd.to_datetime(date_list[i])
-                    	# If date was converted to NaT, take note
+                    # If error, set as NaT
                     except:
                         date_list[i] = np.datetime64('NaT')
-                        nats_added += 1
+            # If any other case, set as NaT
             else:
                 date_list[i] = np.datetime64('NaT')
-                nats_added += 1
+        # If date was stored as NaT, increase counter
+        if date_list[i] == np.datetime64('NaT'):
+            nats_added += 1
 
     print('{} NaT added to list'.format(nats_added))
     return date_list
