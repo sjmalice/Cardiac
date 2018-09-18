@@ -59,7 +59,7 @@ def find_duration(discharge, enroll_date, discharge_date):
         x = (today - enroll_date).days
     return x if x > 0. else np.nan
 
-def find_age(row, threshold = 0.):
+def find_age(row, threshold = [20., 120.]):
     """
     age (type float, expressed in years) is deduced from birth date
     Non mutating Function
@@ -71,7 +71,8 @@ def find_age(row, threshold = 0.):
         x = round((today - row).days/365)
     except ValueError:
         x = np.nan
-    return x if x > threshold else np.nan
+
+    return x if (x > threshold[0] and x < threshold[1]) else np.nan
 
 def clean_weight_change(weight, weight_change, threshold=0.25):
     """
