@@ -126,6 +126,11 @@ def meta_clean(df):
         row['weight'],row['weight_change_since_admit']),axis=1)
     df['this_weight_change'] = df.apply(lambda row: get_frac_weight_change(
         row['weight'],row['this_weight_change']),axis=1)
+    df['weight_change_since_admit_frac'] = df.apply(lambda row: get_frac_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
+    df['this_weight_change_frac'] = df.apply(lambda row: get_frac_weight_change(row['weight'],row['this_weight_change']),axis=1)
+    df.drop('this_weight_change', axis =1,inplace =True)
+    df.drop('weight_change_since_admit', axis =1,inplace =True)
+    df.drop('admit_weight', axis =1,inplace =True)
 
     df['patient_gender']=df.patient_gender.apply(lambda x: clean_gender(x))
     df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
