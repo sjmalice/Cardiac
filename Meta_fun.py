@@ -87,10 +87,10 @@ def meta_clean(df):
     # %% Clean effusion rate
 
     df['ef']=df['ef'].apply(lambda x: clean_EF_rows(x))
-    df.ef[df.ef > 1] = np.nan
+    df.loc[df.ef > 1, "ef"] = np.nan
 
     # Remove oulier in this_bnp_change
-    df.this_bnp_change[df.this_bnp_change < -5000] = np.nan
+    df.loc[df.this_bnp_change < -5000, "this_bnp_change"] = np.nan
 
     # Clean Blood Pressure rows
     df['diastolic']=df.apply(lambda row: clean_diastolic_columns(row['diastolic'],
