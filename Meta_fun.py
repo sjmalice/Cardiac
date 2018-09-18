@@ -32,8 +32,8 @@ def final_imputation(df):
     # df.admit_weight.fillna(WEIGHT),inplace=True)
 
     # impute weight_change_since_admit using admit_weight
-    df.weight_change_since_admit.fillna(np.nanmedian(train(df).weight_change_since_admit),inplace=True)
-    df.this_weight_change.fillna(np.nanmedian(train(df).this_weight_change),inplace=True)# fill with median
+    df.weight_change_since_admit_frac.fillna(np.nanmedian(train(df).weight_change_since_admit_frac),inplace=True)
+    df.this_weight_change_frac.fillna(np.nanmedian(train(df).this_weight_change_frac),inplace=True)# fill with median
 
     df.this_bnp_change.fillna(np.nanmedian(train(df).this_bnp_change),inplace=True)
     df.bnp.fillna(np.nanmedian(train(df).bnp),inplace=True)
@@ -66,7 +66,7 @@ def temporary_imputation(df):
     df.patient_gender.fillna(mode(train(df).patient_gender).mode[0],inplace=True)
     df.ef.fillna(np.mean(train(df).ef),inplace=True)
     # Maybe should group by Gender to impute weight
-    df.admit_weight.fillna(np.mean(train(df).admit_weight),inplace=True)
+    #df.admit_weight.fillna(np.mean(train(df).admit_weight),inplace=True)
     df.weight_change_since_admit.fillna(0,inplace=True)
     df.this_bnp_change.fillna(mode(train(df).this_bnp_change).mode[0],inplace=True)
     df.potasium.fillna(np.mean(train(df).potasium),inplace=True)
