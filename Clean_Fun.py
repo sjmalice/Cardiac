@@ -116,8 +116,8 @@ def clean_labs(x):
     else:
         return x
 
-def get_standardized_columns(df, standardize_cols= ['ef', 'admit_weight',  'weight',
-    'this_weight_change', 'weight_change_since_admit', 'bnp',
+def get_standardized_columns(df, standardize_cols= ['ef', 'weight',
+    'this_weight_change_frac', 'weight_change_since_admit_frac', 'bnp',
     'this_bnp_change', 'bun', 'cr', 'potasium',
     'this_cr_change', 'resting_hr', 'systolic', 'diastolic',
     'duration', 'age']):
@@ -144,7 +144,7 @@ def get_standardized_columns(df, standardize_cols= ['ef', 'admit_weight',  'weig
     df_withstd = pd.concat([df[non_cont_cols],df_numeric_continuous], axis =1)
     return df_withstd
 
-def get_log_transformed_columns(x, cols = ['admit_weight', 'weight', 'bnp', 'bun', 'cr', 'duration']):
+def get_log_transformed_columns(x, cols = [ 'weight', 'bnp', 'bun', 'cr', 'duration']):
     """
     Non mutating function
     Author: Aungshuman
