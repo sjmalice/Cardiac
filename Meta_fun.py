@@ -87,10 +87,10 @@ def meta_clean(df):
     # %% Clean effusion rate
 
     df['ef']=df['ef'].apply(lambda x: clean_EF_rows(x))
-    df.loc[df.ef > 1,'ef'] = np.nan
+    df.loc[df.ef > 1, "ef"] = np.nan
 
     # Remove oulier in this_bnp_change
-    df.loc[df.this_bnp_change < -5000,'this_bnp_change'] = np.nan
+    df.loc[df.this_bnp_change < -5000, "this_bnp_change"] = np.nan
 
     # Clean Blood Pressure rows
     df['diastolic']=df.apply(lambda row: clean_diastolic_columns(row['diastolic'],
@@ -140,7 +140,7 @@ def meta_clean(df):
     df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
 
     # set any 0 lab results to None
-    labs=['bnp','cr','potasium','mg','sodium']
+    labs=['bnp','cr',"bun",'potasium','mg','sodium']
     for lab in labs:
         df[lab] = df[lab].apply(lambda x: clean_labs(x))
 
