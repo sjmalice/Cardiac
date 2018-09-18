@@ -67,7 +67,7 @@ def temporary_imputation(df):
     df.ef.fillna(np.mean(train(df).ef),inplace=True)
     # Maybe should group by Gender to impute weight
     #df.admit_weight.fillna(np.mean(train(df).admit_weight),inplace=True)
-    df.weight_change_since_admit.fillna(0,inplace=True)
+    df.weight_change_since_admit_frac.fillna(0,inplace=True)
     df.this_bnp_change.fillna(mode(train(df).this_bnp_change).mode[0],inplace=True)
     df.potasium.fillna(np.mean(train(df).potasium),inplace=True)
     df.this_cr_change.fillna(mode(train(df).this_cr_change).mode[0],inplace=True)
@@ -126,10 +126,7 @@ def meta_clean(df):
     df['duration']=df.apply(lambda row: find_duration(row['discharge'],
         row['enrollment_date'],row['discharge_date']),axis=1)
     df['age'] = df['date_of_birth'].apply(find_age)
-    df['weight_change_since_admit'] = df.apply(lambda row: get_frac_weight_change(
-        row['weight'],row['weight_change_since_admit']),axis=1)
-    df['this_weight_change'] = df.apply(lambda row: get_frac_weight_change(
-        row['weight'],row['this_weight_change']),axis=1)
+
     df['weight_change_since_admit_frac'] = df.apply(lambda row: get_frac_weight_change(row['weight'],row['weight_change_since_admit']),axis=1)
     df['this_weight_change_frac'] = df.apply(lambda row: get_frac_weight_change(row['weight'],row['this_weight_change']),axis=1)
     df.drop('this_weight_change', axis =1,inplace =True)
