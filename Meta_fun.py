@@ -52,6 +52,7 @@ def final_imputation(df):
 
     df.age.fillna(np.mean(train(df).age),inplace=True)
     df.duration.fillna(np.nanmedian(train(df).duration),inplace=True)
+    df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
     print("Successfully imputed for all missing values")
 
 
@@ -139,7 +140,9 @@ def meta_clean(df):
     df.drop('admit_weight', axis =1,inplace =True)
 
     df['patient_gender']=df.patient_gender.apply(lambda x: clean_gender(x))
-    df['acute_or_chronic']=df.apply(lambda row: impute_acute_chronic(row['acute_or_chronic'],row['duration']),axis=1)
+
+    df.duration=df.duration.apply(lambda x: None if x==9999 else x)
+
 
     # set any 0 lab results to None
     labs=['bnp','cr',"bun",'potasium','mg','sodium']
@@ -148,7 +151,7 @@ def meta_clean(df):
 
     remove_invalid_rows(df)
 
-    df.duration=df.duration.apply(lambda x: None if x==9999 else x)
+    #df.duration=df.duration.apply(lambda x: None if x==9999 else x)
     df.age=df.age.apply(lambda x: None if x==9999 else x)
 
     df['outcome']=df.apply(lambda row: determine_outcome(row['status'],row['discharge'],row['discharge_date']),axis=1)
