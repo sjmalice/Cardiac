@@ -36,16 +36,16 @@ df = gs_sheet_merge(live_key,archive_key, live_sheet_pkl_path, archive_sheet_pkl
 print('-'*50)
 print("--- %s seconds ---" % (time.time() - start_time))
 print('Successfully pulled new data from Google API')
-df.to_csv('SuccessArchivetoo2.csv')
+# df.to_csv('SuccessArchivetoo2.csv')
 
-df=pd.read_csv('SuccessArchivetoo2.csv',index_col=0)
+# df=pd.read_csv('SuccessArchivetoo2.csv',index_col=0)
 # %% Cleaning and Modelling
 from clean_model import *
 # df.sample(5)
 
 df_full = meta_clean(df)
 
-return_df, accuracy, precision, cnf_matrix, thresh_accuracy, thresh_precision, cnf_thresh_matrix=logistic_model(df_full,threshold=0.6)
+return_df, accuracy, precision, cnf_matrix, thresh_accuracy, thresh_precision, cnf_thresh_matrix=xgboost_model(df_full,threshold=0.75)
 
 # %% Adding worksheet of our dummification to the Google sheet
 
